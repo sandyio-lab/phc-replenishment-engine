@@ -84,7 +84,7 @@ logger = logging.getLogger("gemini_sms_engine")
 # Config
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = "gemini-3.6-flash"   # same model as the other two modules
+MODEL_NAME = "gemini-2.5-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
