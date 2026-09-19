@@ -38,7 +38,7 @@ async def extract_invoice(file: UploadFile = File(...)):
     except RuntimeError as error:
         message = str(error)
         if "401" in message or "UNAUTHENTICATED" in message:
-            detail = "Gemini rejected the API key. Check GEMINI_API_KEY in ai_integration/.env."
+            detail = "Gemini rejected the API key. Check GEMINI_API_KEY or GOOGLE_API_KEY in ai_integration/.env."
         elif "429" in message or "RESOURCE_EXHAUSTED" in message:
             detail = "Gemini quota is exhausted. Check the Gemini project quota and billing."
         else:

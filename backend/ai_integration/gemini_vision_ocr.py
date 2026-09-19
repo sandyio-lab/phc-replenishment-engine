@@ -27,7 +27,7 @@ Or from the command line:
 
 Environment
 ===========
-Requires GEMINI_API_KEY in your environment or a .env file:
+Requires GEMINI_API_KEY or GOOGLE_API_KEY in your environment or a .env file:
     GEMINI_API_KEY=your_key_here
 
 Install
@@ -60,15 +60,15 @@ logger = logging.getLogger("gemini_vision_ocr")
 # Config
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = "gemini-3.6-flash"   # multimodal model enabled for this API key
+MODEL_NAME = "gemini-1.5-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
-_API_KEY = os.environ.get("GEMINI_API_KEY")
+_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 if not _API_KEY:
     logger.warning(
-        "GEMINI_API_KEY not set. Set it in your environment or a .env file "
-        "before calling extract_invoice_data(), or calls will fail."
+        "GEMINI_API_KEY or GOOGLE_API_KEY not set. Set one in your environment "
+        "or a .env file before calling extract_invoice_data(), or calls will fail."
     )
 
 _client: Optional[genai.Client] = None
