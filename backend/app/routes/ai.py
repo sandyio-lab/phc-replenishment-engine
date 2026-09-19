@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/ai", tags=["Google AI"])
@@ -43,10 +44,13 @@ async def extract_invoice(file: UploadFile = File(...)):
             detail = "Gemini quota is exhausted. Check the Gemini project quota and billing."
         else:
             detail = "Gemini photo extraction failed. Check the API key, quota, model availability, and image format."
-        raise HTTPException(
-            status_code=503,
-            detail=detail,
-        ) from error
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "gemini_invoice_extraction_failed",
+                "detail": detail,
+            },
+        )
     return result.model_dump(mode="json")
 
 
