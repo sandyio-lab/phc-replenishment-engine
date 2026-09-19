@@ -1,0 +1,7 @@
+fastapi>=0.110.0
+uvicorn>=0.28.0
+google-genai==1.16.0
+twilio>=9.0.0
+python-dotenv==1.0.1
+pydantic==2.7.1
+requests==2.32.3

@@ -38,3 +38,10 @@ credentials.json
 # --- Misc ---
 *.tmp
 .cache/
+.env
+
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
