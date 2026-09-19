@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.database import engine, Base
 from app.routes        import phcs, inventory, vendors, orders, analytics, ai
@@ -103,12 +104,12 @@ def root():
 
 @app.get("/worker", include_in_schema=False)
 def worker_app():
-    return FileResponse(_PROJECT_ROOT / "index.html")
+    return FileResponse(_PROJECT_ROOT / "index.html", media_type="text/html")
 
 
-
-
-from fastapi.staticfiles import StaticFiles
-
-# Serve static HTML/JS/CSS files directly from the root directory
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
+# Keep any local worker assets available without relying on Render's working directory.
+app.mount(
+    "/worker-assets",
+    StaticFiles(directory=_PROJECT_ROOT),
+    name="worker-assets",
+)
