@@ -958,6 +958,7 @@
 
     // --- CAMERA & AUDIO RECORDING HANDLERS ---
     async function handlePhotoCapture(event) {
+      event.preventDefault();
       const file = event.target.files[0];
       if (file) {
         try {
@@ -986,9 +987,15 @@
           const lines = extraction.line_items || [];
           if (!lines.length) throw new Error('No medicine rows were found in the photo.');
           populateMedicineRowsFromExtraction(lines);
-        } catch (error) {
-          console.warn('Invoice AI extraction unavailable.', error);
-          alert(error.message);
+        } catch (err) {
+          console.error('Gemini photo extraction failed.', {
+            error: err,
+            endpoint: `${API_BASE}/ai/invoice`,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size
+          });
+          alert(err.message);
         }
       }
     }
