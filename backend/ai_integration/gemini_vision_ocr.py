@@ -60,7 +60,7 @@ logger = logging.getLogger("gemini_vision_ocr")
 # Config
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = "gemini-3.6-flash"
+MODEL_NAMES = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
@@ -188,26 +188,42 @@ def extract_invoice_data(
     for attempt in range(1, MAX_RETRIES + 2):  # e.g. MAX_RETRIES=2 -> tries 1,2,3
         try:
             client = _get_client()
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
-                            types.Part.from_text(
-                                text="Extract the medicine invoice/delivery details from this image."
-                            ),
+            for model_name in MODEL_NAMES:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=[
+                            types.Content(
+                                role="user",
+                                parts=[
+                                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
+                                    types.Part.from_text(
+                                        text="Extract the medicine invoice/delivery details from this image."
+                                    ),
+                                ],
+                            )
                         ],
+                        config=types.GenerateContentConfig(
+                            system_instruction=_SYSTEM_INSTRUCTION,
+                            response_mime_type="application/json",
+                            response_schema=InvoiceExtraction,
+                            temperature=0.1,  # low temperature: we want faithful reading, not creativity
+                        ),
                     )
-                ],
-                config=types.GenerateContentConfig(
-                    system_instruction=_SYSTEM_INSTRUCTION,
-                    response_mime_type="application/json",
-                    response_schema=InvoiceExtraction,
-                    temperature=0.1,  # low temperature: we want faithful reading, not creativity
-                ),
-            )
+                    break
+                except Exception as e:  # model unavailable, not found, rate limited, etc.
+                    last_error = e
+                    logger.warning(
+                        "Gemini model %s failed on attempt %d (%s). Trying next model...",
+                        model_name, attempt, e,
+                    )
+            else:
+                logger.warning(
+                    "All Gemini fallback models failed on attempt %d. Retrying...", attempt
+                )
+                if attempt <= MAX_RETRIES:
+                    time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+                continue
 
             raw_text = response.text
             data = json.loads(raw_text)
