@@ -60,7 +60,7 @@ logger = logging.getLogger("gemini_vision_ocr")
 # Config
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-3.6-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
