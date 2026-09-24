@@ -11,9 +11,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 _configured_database_url = (os.getenv("DATABASE_URL") or "").strip()
-if _configured_database_url:
+_deployment_environment = (
+    os.getenv("VERCEL_ENV")
+    or os.getenv("ENVIRONMENT")
+    or os.getenv("APP_ENV")
+    or ""
+).strip().lower()
+_read_only_runtime = os.getenv("VERCEL") == "1" or _deployment_environment in {
+    "production",
+    "prod",
+}
+
+if _configured_database_url.startswith("sqlite") and _read_only_runtime:
+    DATABASE_URL = "sqlite:////tmp/phc.db"
+elif _configured_database_url:
     DATABASE_URL = _configured_database_url
-elif os.getenv("VERCEL") == "1":
+elif _read_only_runtime:
     DATABASE_URL = "sqlite:////tmp/phc.db"
 else:
     DATABASE_URL = "sqlite:///./phc.db"
