@@ -88,10 +88,10 @@ MODEL_NAME = "gemini-2.5-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
-_GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-_TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-_TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
-_TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
+_GEMINI_API_KEY = (os.environ.get("GEMINI_API_KEY") or "").strip()
+_TWILIO_ACCOUNT_SID = (os.environ.get("TWILIO_ACCOUNT_SID") or "").strip()
+_TWILIO_AUTH_TOKEN = (os.environ.get("TWILIO_AUTH_TOKEN") or "").strip()
+_TWILIO_FROM_NUMBER = (os.environ.get("TWILIO_FROM_NUMBER") or "").strip()
 
 if not _GEMINI_API_KEY:
     logger.warning("GEMINI_API_KEY not set. Message composition will fail until it is.")
@@ -106,6 +106,8 @@ _client: Optional[genai.Client] = None
 
 def _get_client() -> genai.Client:
     global _client
+    if not _GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
     if _client is None:
         _client = genai.Client(api_key=_GEMINI_API_KEY)
     return _client

@@ -10,7 +10,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./phc.db")
+_configured_database_url = (os.getenv("DATABASE_URL") or "").strip()
+if _configured_database_url:
+    DATABASE_URL = _configured_database_url
+elif os.getenv("VERCEL") == "1":
+    DATABASE_URL = "sqlite:////tmp/phc.db"
+else:
+    DATABASE_URL = "sqlite:///./phc.db"
 
 # SQLite needs check_same_thread=False; PostgreSQL doesn't need it
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
