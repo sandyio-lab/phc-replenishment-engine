@@ -9,8 +9,8 @@ Take a "Low Stock" alert (drug, quantity left, vendor, vendor's phone and
 preferred language) and:
   1. Ask Gemini to turn it into a natural, polite reorder message in the
      vendor's regional language (not a robotic word-for-word translation).
-  2. Send that message as a real SMS via Twilio's REST API (raw `requests`
-     calls, no Twilio SDK dependency).
+  2. Send that message as a real SMS via Fast2SMS's Quick (`q`) route
+     REST API (raw `requests` calls, no SDK dependency).
   3. Return a structured record of what was composed and what happened,
      shaped for Backend Dev 1 to log against the order.
 
@@ -19,8 +19,18 @@ not decide WHETHER to reorder (that's Backend Dev 1's dynamic-reorder
 logic) and does not touch the database directly.
 
 SAFETY DEFAULT: dispatch_low_stock_alert() defaults to dry_run=True. It
-will NOT send a real SMS or spend a Twilio credit unless you explicitly
+will NOT send a real SMS or spend Fast2SMS credit unless you explicitly
 pass dry_run=False. See 03_GEMINI_SMS_SETUP.md for why.
+
+Why Fast2SMS instead of Twilio
+===============================
+Twilio's trial tier requires pre-registered/predefined SMS templates for
+Indian numbers (TRAI DLT compliance) and free-text messages get rejected
+with "Invalid template name." Fast2SMS's Quick (`q`) route sends through
+their own pre-approved shared route, so it accepts free-text messages to
+real Indian numbers without you needing your own DLT template
+registration. It's meant for testing/low-volume use (a hackathon demo),
+not production bulk SMS — that would need a DLT-registered route later.
 
 Usage
 =====
@@ -49,9 +59,7 @@ Or from the command line (uses a built-in sample alert):
 Environment
 ===========
     GEMINI_API_KEY=your_gemini_key_here
-    TWILIO_ACCOUNT_SID=your_account_sid_here
-    TWILIO_AUTH_TOKEN=your_auth_token_here
-    TWILIO_FROM_NUMBER=+1xxxxxxxxxx
+    FAST2SMS_API_KEY=your_fast2sms_key_here
 
 Install
 =======
@@ -86,17 +94,16 @@ MODEL_NAME = "gemini-2.5-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
+FAST2SMS_URL = "https://www.fast2sms.com/dev/bulkV2"
+
 _GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-_TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-_TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
-_TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
+_FAST2SMS_API_KEY = os.environ.get("FAST2SMS_API_KEY")
 
 if not _GEMINI_API_KEY:
     logger.warning("GEMINI_API_KEY not set. Message composition will fail until it is.")
-if not (_TWILIO_ACCOUNT_SID and _TWILIO_AUTH_TOKEN and _TWILIO_FROM_NUMBER):
+if not _FAST2SMS_API_KEY:
     logger.warning(
-        "Twilio credentials incomplete (need TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, "
-        "TWILIO_FROM_NUMBER). dry_run mode will still work; real sending will not."
+        "FAST2SMS_API_KEY not set. dry_run mode will still work; real sending will not."
     )
 
 _client: Optional[genai.Client] = None
@@ -121,7 +128,7 @@ class LowStockAlert(BaseModel):
     unit: str = "units"
     reorder_quantity: int = 0
     vendor_name: str
-    vendor_phone: str = Field(description="Indian 10-digit number or E.164, e.g. '9876543210' or '+919876543210'")
+    vendor_phone: str = Field(description="Indian mobile number in any common form, e.g. '9876543210', '+919876543210', or '919876543210'")
     target_language: str = Field(default="English", description="e.g. 'Hindi', 'Kannada', 'Tamil', 'Telugu', 'English'")
 
 
@@ -145,7 +152,7 @@ class DispatchResult(BaseModel):
     char_count: int
     dry_run: bool
     sent: bool
-    provider: str = "twilio"
+    provider: str = "fast2sms"
     message_sid: str = ""
     error: str = ""
 
@@ -254,42 +261,102 @@ def compose_reorder_message(alert: LowStockAlert, use_fallback_on_failure: bool 
 
 
 # ---------------------------------------------------------------------------
-# Step 2: normalize phone number & send via Twilio REST API (raw requests)
+# Step 2: normalize phone number & send via Fast2SMS Quick route (raw requests)
 # ---------------------------------------------------------------------------
 
-def _normalize_to_e164(raw_number: str, default_country_code: str = "91") -> str:
-    """Best-effort normalization to E.164. Assumes India (+91) for bare
-    10-digit numbers, since that's this project's context. Already-prefixed
-    '+' numbers are passed through untouched."""
-    digits = "".join(ch for ch in raw_number if ch.isdigit() or ch == "+")
-    if digits.startswith("+"):
-        return digits
-    if len(digits) == 10:
-        return f"+{default_country_code}{digits}"
-    return f"+{digits}"
+def _normalize_to_indian_10_digit(raw_number: str) -> str:
+    """
+    Fast2SMS's `numbers` param wants a bare 10-digit Indian mobile number —
+    no '+', no country code. This strips a leading '+91' or bare '91'
+    prefix (people copying numbers from the Twilio/E.164 days will have
+    these) and leaves the last 10 digits.
+    """
+    digits = "".join(ch for ch in raw_number if ch.isdigit())
+
+    if len(digits) == 12 and digits.startswith("91"):
+        digits = digits[2:]
+    elif len(digits) == 13 and digits.startswith("091"):
+        digits = digits[3:]
+
+    if len(digits) > 10:
+        digits = digits[-10:]
+
+    return digits
 
 
-def _send_via_twilio(to_number: str, body: str) -> DispatchResult:
-    """Raw REST call to Twilio's Messages endpoint — no Twilio SDK needed."""
-    if not (_TWILIO_ACCOUNT_SID and _TWILIO_AUTH_TOKEN and _TWILIO_FROM_NUMBER):
-        return {"sent": False, "message_sid": "", "error": "Twilio credentials not configured in .env"}
+def send_sms_fast2sms(
+    phone_number: str,
+    message: str,
+    dry_run: bool = True,
+    api_key: Optional[str] = None,
+) -> dict:
+    """
+    Sends an SMS via Fast2SMS's Quick (`q`) route.
 
-    url = f"https://api.twilio.com/2010-04-01/Accounts/{_TWILIO_ACCOUNT_SID}/Messages.json"
-    payload = {"From": _TWILIO_FROM_NUMBER, "To": to_number, "Body": body}
+    phone_number: any common form ('9876543210', '+919876543210',
+        '919876543210') — normalized to a bare 10-digit number internally.
+    message: the text to send (should already be composed/localized).
+    dry_run: if True (default), composes the request but does not call
+        Fast2SMS or spend credit. Returns a preview dict instead.
+    api_key: Fast2SMS API key. Defaults to FAST2SMS_API_KEY from the
+        environment if not passed explicitly.
+
+    Returns a dict: {"sent": bool, "message_sid": str, "error": str}
+    ("message_sid" holds Fast2SMS's request_id when available, kept under
+    that name so DispatchResult's shape doesn't change across providers.)
+    """
+    clean_number = _normalize_to_indian_10_digit(phone_number)
+    key = api_key or _FAST2SMS_API_KEY
+
+    if dry_run:
+        logger.info("[DRY RUN] Would send via Fast2SMS to %s: %s", clean_number, message)
+        return {"sent": False, "message_sid": "", "error": ""}
+
+    if not key:
+        return {"sent": False, "message_sid": "", "error": "FAST2SMS_API_KEY not configured"}
+
+    if len(clean_number) != 10:
+        return {
+            "sent": False,
+            "message_sid": "",
+            "error": f"'{phone_number}' did not normalize to a valid 10-digit Indian number (got '{clean_number}')",
+        }
+
+    payload = {
+        "route": "q",
+        "message": message,
+        "language": "english",
+        "flash": 0,
+        "numbers": clean_number,
+    }
+    headers = {
+        "authorization": key,
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
 
     try:
-        resp = requests.post(
-            url,
-            data=payload,
-            auth=(_TWILIO_ACCOUNT_SID, _TWILIO_AUTH_TOKEN),
-            timeout=15,
-        )
-        resp_json = resp.json()
-        if resp.status_code in (200, 201):
-            return {"sent": True, "message_sid": resp_json.get("sid", ""), "error": ""}
-        return {"sent": False, "message_sid": "", "error": resp_json.get("message", f"HTTP {resp.status_code}")}
-    except Exception as e:
+        response = requests.post(FAST2SMS_URL, data=payload, headers=headers, timeout=15)
+        response.raise_for_status()
+        result = response.json()
+
+        if result.get("return") is True:
+            return {
+                "sent": True,
+                "message_sid": str(result.get("request_id", "")),
+                "error": "",
+            }
+        return {
+            "sent": False,
+            "message_sid": "",
+            "error": "; ".join(result.get("message", ["Unknown Fast2SMS error"]))
+            if isinstance(result.get("message"), list)
+            else str(result.get("message", "Unknown Fast2SMS error")),
+        }
+
+    except requests.RequestException as e:
         return {"sent": False, "message_sid": "", "error": str(e)}
+    except (ValueError, json.JSONDecodeError) as e:
+        return {"sent": False, "message_sid": "", "error": f"Could not parse Fast2SMS response: {e}"}
 
 
 # ---------------------------------------------------------------------------
@@ -299,34 +366,34 @@ def _send_via_twilio(to_number: str, body: str) -> DispatchResult:
 def dispatch_low_stock_alert(alert: LowStockAlert, dry_run: bool = True) -> DispatchResult:
     """
     Compose the localized reorder message and, unless dry_run is True
-    (the default), send it as a real SMS via Twilio.
+    (the default), send it as a real SMS via Fast2SMS.
 
     dry_run=True (default): composes and returns the message, does NOT
-        send anything or touch Twilio credits. Use this to review what
+        send anything or touch Fast2SMS credit. Use this to review what
         would be sent before committing.
-    dry_run=False: actually sends the SMS. Requires TWILIO_ACCOUNT_SID,
-        TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER in your environment, and
-        (on a Twilio trial account) the recipient must be a verified
-        number in the Twilio Console.
+    dry_run=False: actually sends the SMS. Requires FAST2SMS_API_KEY in
+        your environment.
     """
     composed = compose_reorder_message(alert)
-    to_number = _normalize_to_e164(alert.vendor_phone)
+    clean_number = _normalize_to_indian_10_digit(alert.vendor_phone)
 
-    if dry_run:
-        logger.info("[DRY RUN] Would send to %s: %s", to_number, composed.local_message)
-        send_outcome = {"sent": False, "message_sid": "", "error": ""}
-    else:
-        send_outcome = _send_via_twilio(to_number, composed.local_message)
+    send_outcome = send_sms_fast2sms(
+        phone_number=alert.vendor_phone,
+        message=composed.local_message,
+        dry_run=dry_run,
+    )
+
+    if not dry_run:
         if send_outcome["sent"]:
-            logger.info("SMS sent to %s (SID: %s).", to_number, send_outcome["message_sid"])
+            logger.info("SMS sent to %s (request_id: %s).", clean_number, send_outcome["message_sid"])
         else:
-            logger.error("SMS send failed to %s: %s", to_number, send_outcome["error"])
+            logger.error("SMS send failed to %s: %s", clean_number, send_outcome["error"])
 
     return DispatchResult(
         phc_name=alert.phc_name,
         drug_name=alert.drug_name,
         vendor_name=alert.vendor_name,
-        vendor_phone=to_number,
+        vendor_phone=clean_number,
         local_message=composed.local_message,
         english_back_translation=composed.english_back_translation,
         language=composed.language,
@@ -349,7 +416,7 @@ _SAMPLE_ALERT = LowStockAlert(
     unit="strips",
     reorder_quantity=200,
     vendor_name="Karnataka State Medical Supplies Corp",
-    vendor_phone="9876543210",   # replace with your own verified number to test a real send
+    vendor_phone="9876543210",   # replace with your own number to test a real send
     target_language="Kannada",
 )
 
@@ -357,7 +424,7 @@ if __name__ == "__main__":
     send_for_real = "--send" in sys.argv
 
     if send_for_real:
-        print("Sending a REAL SMS (dry_run=False)...\n")
+        print("Sending a REAL SMS via Fast2SMS (dry_run=False)...\n")
     else:
         print("Dry run (default) — nothing will be sent. Pass --send to actually deliver.\n")
 
