@@ -1,161 +1,170 @@
-# PHC Supply Chain Replenishment Engine
+# Autonomous PHC Medicine Replenishment & Supply Chain Resilience Engine
 
-Autonomous medicine replenishment & supply chain resilience engine for Primary Health Centres (PHCs) — Chikkaballapur District, Karnataka.
+An AI-powered platform that automates medicine stock tracking, reordering, and inter-facility redistribution for Primary Health Centres (PHCs) across rural India — built for **Build with AI: Code for Communities**, Track 03: *Smart Health & Supply Chain Resilience*.
 
-Built for: **Build with AI: Code for Communities** (Google Cloud Hackathon 2026)
+> Built for India — designed to scale from a single district to healthcare networks across states.
 
 ---
+
+## Table of Contents
+
+- [Problem Statement](#problem-statement)
+- [Solution Overview](#solution-overview)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Google AI Integration](#google-ai-integration)
+- [Tech Stack](#tech-stack)
+- [Team](#team)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Risk Mitigations](#risk-mitigations)
+- [Hackathon Submission](#hackathon-submission)
+
+---
+
+## Problem Statement
+
+Public healthcare across rural India faces severe medicine supply chain vulnerabilities:
+
+- **High data-entry friction** — overburdened PHC staff rely on manual paper registers, causing delayed stock updates.
+- **Reactive replenishment** — reorders are placed only after stock hits zero, ignoring vendor delivery lead times.
+- **Communication gaps** — local vendors and district warehouses operate in regional languages and lack integration with rigid central dashboards.
+
+The result: frequent stock-outs of essential medicines (Paracetamol, ORS, antibiotics) and wastage from expired drugs.
+
+## Solution Overview
+
+Instead of acting as a passive inventory dashboard, this platform automates the end-to-end replenishment lifecycle:
+
+- **Zero-touch ingestion** — captures stock via invoice/package scanning using Gemini Vision.
+- **Predictive reordering** — automatically detects low stock and upcoming expiries based on daily consumption velocity.
+- **Automated vernacular dispatch** — generates and sends reorder requests to local vendors in their native language via SMS/WhatsApp.
+- **End-to-end tracking & inter-PHC transfers** — tracks shipments in real time and auto-routes emergency transfers from nearby surplus PHCs when vendor delivery is delayed.
+
+## Key Features
+
+| Feature | Description |
+|---|---|
+| Invoice/Package Scanning | Staff photograph a delivery register or carton; Gemini Vision extracts drug name, batch number, quantity, and expiry date into structured JSON. |
+| Vernacular Voice Logging | Staff log daily distribution via voice notes in regional languages (Hindi, Kannada, Tamil, etc.). |
+| Dynamic Reorder Engine | Reorders trigger based on consumption velocity and supplier lead times, not static zero-stock thresholds. |
+| Expiry Watchlist | Daily scan flags batches expiring within 30–60 days for priority distribution or transfer. |
+| Inter-PHC Redistribution | Identifies neighboring PHCs (within ~20 km) with surplus stock and generates peer-to-peer transfer requests. |
+| Multilingual Vendor Requisition | Formats verified orders into localized text/voice messages dispatched via SMS/WhatsApp. |
+| Live Pipeline Tracking | Order lifecycle tracked through: `Requisition Sent → Vendor Confirmed → In Transit → Delivered & Verified`. |
+| Offline-First PWA | Stock logging works with zero connectivity; actions queue locally and sync automatically once online. |
+| Network Map | Interactive map of PHC locations, color-coded by stock health (green = healthy, red = at risk). |
+
+## System Architecture
+
+```
+[ PHC Staff ] ---> (Gemini Vision OCR / Voice) ---> [ Offline-First PWA ]
+                                                             │
+                                                     (Background Sync)
+                                                             ▼
+[ District Supplier ] <--- (WhatsApp / SMS API) <--- [ Python / Node Backend ]
+         │                                                   │
+  (Status Updates)                               (Demand Engine & Relays)
+         ▼                                                   ▼
+[ Live Track Dashboard ] <------------------------- [ PostgreSQL Database ]
+```
+
+**Layer 1 — Data Capture & Ingestion (Frontend + Gemini Vision)**
+Offline-first PWA for stock logging; Gemini Vision OCR parses invoices/cartons into structured JSON; vernacular voice logging for distribution updates.
+
+**Layer 2 — Intelligence & Demand Engine (Backend Core)**
+Dynamic reorder calculation based on consumption velocity and lead times; expiry watchlist; inter-PHC redistribution logic for emergency transfers.
+
+**Layer 3 — Action & Delivery Tracking (Communications & Workflow)**
+Gemini-formatted multilingual vendor requisitions dispatched via SMS/WhatsApp; live four-stage pipeline tracking.
+
+## Google AI Integration
+
+| Touchpoint | Google AI Tool | Core Function |
+|---|---|---|
+| Document Scanning | Gemini Vision API | Extracts batch details, dosage, and expiry dates from invoices and packaging photos. |
+| Vernacular Communications | Gemini Flash API | Translates structured order payloads into localized, polite procurement text/voice notes for district suppliers. |
+| Voice Command Parsing | Gemini Multimodal | Converts rural dialect audio logs into deterministic JSON database updates. |
+
+Gemini is deliberately scoped to **translation, parsing, and extraction only** — all quantities, drug IDs, and reorder math are computed deterministically in backend code (see [Risk Mitigations](#risk-mitigations)).
+
+## Tech Stack
+
+- **Backend:** Python (Flask/FastAPI), PostgreSQL/SQLite
+- **Frontend:** React / Next.js PWA with IndexedDB offline caching, Leaflet.js for mapping
+- **AI/ML:** Google `google-genai` SDK — Gemini Vision, Gemini Flash, Gemini Multimodal
+- **Messaging:** Twilio / Fast2SMS / Meta WhatsApp API
+- **Deployment:** Cloud Run / Cloud Functions (suggested)
+
+## Team
+
+| Role | Owner | Responsibilities |
+|---|---|---|
+| Backend Dev 1 — System Architecture & Core Logic | Shreyas | Database models (PHCs, Inventory, Vendors, Orders), reorder math, inter-PHC distance calculations, data seeding script (50+ synthetic Indian PHCs, NLEM medicine codes), REST API gateway. |
+| Backend Dev 2 — Google GenAI & Communications | *(this repo's author)* | Gemini Vision invoice parsing, Gemini audio intent/quantity extraction, multilingual SMS engine (Gemini Flash + Twilio/Fast2SMS). |
+| Frontend Dev 1 — PHC Mobile App / PWA | Bhavana | Worker-facing mobile web app, camera/audio capture UI, local inventory tables with expiry alerts. |
+| Frontend Dev 2 — District Admin & Network Dashboard | Darren | Kanban-style supply pipeline, interactive Leaflet.js PHC map, inter-PHC transfer modal UI. |
 
 ## Project Structure
 
 ```
-phc-replenishment-engine/
-├── backend/                    ← FastAPI Python backend
-│   ├── app/
-│   │   ├── core/
-│   │   │   ├── database.py     ← SQLAlchemy engine + session
-│   │   │   └── demand_engine.py← Reorder logic, Haversine, transfer suggestions
-│   │   ├── models/             ← SQLAlchemy ORM models (PHC, Inventory, Vendor, Order)
-│   │   ├── routes/             ← FastAPI routers (phcs, inventory, vendors, orders, analytics, ai)
-│   │   ├── schemas/            ← Pydantic v2 schemas
-│   │   └── main.py             ← App entry point, CORS, static file serving
-│   ├── ai_integration/
-│   │   ├── gemini_vision_ocr.py       ← Invoice photo → structured data
-│   │   ├── gemini_audio_stock_update.py← Voice note → stock movements
-│   │   └── gemini_sms_engine.py       ← Multilingual reorder SMS via Twilio
-│   ├── api/
-│   │   └── index.py            ← Vercel serverless entry point
-│   ├── seed.py                 ← Database seeder (9 Chikkaballapur PHCs)
-│   ├── requirements.txt
-│   └── .env.example            ← Copy to .env and fill in your keys
-│
+.
+├── backend/
+│   ├── models/            # PHC, Inventory, Vendor, Order schemas
+│   ├── services/          # reorder math, distance calc, demand engine
+│   ├── genai/              # Gemini Vision / Audio / SMS handlers
+│   ├── api/                # Flask/FastAPI routes
+│   └── scripts/            # synthetic data seeding
 ├── frontend/
-│   ├── dashboard/
-│   │   └── index.html          ← Admin dashboard (served at /)
-│   └── worker/
-│       └── index.html          ← Field worker app (served at /worker)
-│
-└── vercel.json                 ← Vercel deployment config
+│   ├── worker-app/         # PHC staff PWA (camera, voice, inventory view)
+│   └── admin-dashboard/    # district admin pipeline + map
+└── README.md
 ```
+*(Update to match the actual repository layout before submission.)*
 
----
-
-## API Keys Required
-
-Copy `backend/.env.example` to `backend/.env` and fill in:
-
-| Variable | Required | Purpose |
-|---|---|---|
-| `DATABASE_URL` | For production | PostgreSQL URL (Neon/Supabase/Railway). SQLite used locally. |
-| `GEMINI_API_KEY` | For AI features | Google AI Studio key — [get it here](https://aistudio.google.com/app/apikey) |
-| `TWILIO_ACCOUNT_SID` | Optional | Only needed to actually send SMS |
-| `TWILIO_AUTH_TOKEN` | Optional | Only needed to actually send SMS |
-| `TWILIO_FROM_NUMBER` | Optional | Only needed to actually send SMS |
-
-**Without `GEMINI_API_KEY`**: The `/api/v1/ai/*` endpoints return errors, but all inventory, orders, analytics, and map features work normally.
-
-**Without Twilio keys**: `/api/v1/ai/reorder-message` works in dry-run mode (returns the composed message, does not send).
-
----
-
-## Local Development
+## Getting Started
 
 ```bash
-# 1. Install dependencies
+# Backend
 cd backend
 pip install -r requirements.txt
+python scripts/seed_data.py      # populate synthetic PHC + medicine data
+uvicorn api.main:app --reload    # or `flask run`
 
-# 2. Set up environment
-cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
-
-# 3. Seed the database
-python seed.py
-
-# 4. Start the server
-uvicorn app.main:app --reload --port 8000
+# Frontend
+cd frontend/worker-app
+npm install
+npm run dev
 ```
 
-Open:
-- **Admin Dashboard**: http://localhost:8000/
-- **Field Worker App**: http://localhost:8000/worker
-- **API Docs (Swagger)**: http://localhost:8000/docs
+Set the following environment variables before running:
+
+```
+GOOGLE_API_KEY=           # Gemini API key
+DATABASE_URL=             # PostgreSQL/SQLite connection string
+TWILIO_ACCOUNT_SID=       # or FAST2SMS_API_KEY
+TWILIO_AUTH_TOKEN=
+```
+
+## Risk Mitigations
+
+| Risk | Mitigation |
+|---|---|
+| LLM hallucination in drug names/quantities | Deterministic guardrails — raw calculations and drug IDs are managed strictly by backend code; Gemini is restricted to text translation and invoice parsing with strict JSON schema validation. |
+| Vendor digital exclusion | Human-in-the-loop approval — every reorder requires a single confirmation tap from the PHC pharmacist before sending. |
+| Intermittent rural connectivity | Store-and-forward architecture — actions queue in IndexedDB while offline and sync automatically once connectivity is restored. |
+
+## Hackathon Submission
+
+Built for **Build with AI: Code for Communities — Second Edition** (Google Cloud), Track 03: *Smart Health & Supply Chain Resilience*.
+
+Submission package checklist:
+- [ ] Source code (public or access-granted GitHub repo)
+- [ ] Demo video (3–5 min, end-to-end walkthrough)
+- [ ] Pitch deck (10–12 slides)
+- [ ] Brief description (2–3 lines)
+- [ ] Deployed live link
 
 ---
 
-## Deploy to Vercel
-
-### Structure Vercel expects
-
-```
-/                        ← repo root
-├── api/
-│   └── index.py         ← Vercel Python function (MUST be here)
-├── requirements.txt     ← Vercel installs these (MUST be at root)
-├── vercel.json          ← routes /api/* → Python, / and /worker → static HTML
-├── frontend/
-│   ├── dashboard/index.html
-│   └── worker/index.html
-└── backend/             ← all Python source code
-    └── app/ ...
-```
-
-### 1. Push to GitHub
-
-```bash
-git add .
-git commit -m "Fix Vercel deployment structure"
-git push
-```
-
-### 2. Import in Vercel
-
-1. Go to [vercel.com](https://vercel.com) → **Add New Project**
-2. Import your GitHub repo
-3. **Root Directory**: leave as `/` (repo root)
-4. **Framework Preset**: Other
-5. Click **Deploy** — Vercel auto-detects `vercel.json`
-
-### 3. Add Environment Variables in Vercel
-
-In your Vercel project → **Settings → Environment Variables**, add:
-
-```
-DATABASE_URL    = postgresql://...   ← get from Neon/Supabase/Railway (see below)
-GEMINI_API_KEY  = your_key_here      ← from aistudio.google.com/app/apikey
-```
-
-### 4. Seed the Production Database
-
-After first deploy, run the seeder locally pointing at your production DB:
-
-```bash
-cd backend
-DATABASE_URL="postgresql://user:pass@host/db" python seed.py
-```
-
-### Recommended Free PostgreSQL Providers
-
-- **[Neon](https://neon.tech)** — best Vercel integration, generous free tier
-- **[Supabase](https://supabase.com)** — free tier with dashboard
-- **[Railway](https://railway.app)** — simplest setup
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/v1/phcs` | List all PHCs |
-| GET | `/api/v1/analytics/network-map` | PHC coordinates + stock health (powers the map) |
-| GET | `/api/v1/analytics/district-summary` | Per-district stock breakdown |
-| GET | `/api/v1/orders` | List all orders |
-| GET | `/api/v1/orders/pipeline/summary` | Kanban board counts |
-| GET | `/api/v1/vendors` | List all vendors |
-| GET | `/api/v1/phcs/{id}/alerts` | Demand scan for a PHC |
-| GET | `/api/v1/phcs/{id}/transfers` | Inter-PHC transfer suggestions |
-| POST | `/api/v1/ai/invoice` | Extract data from invoice photo (Gemini) |
-| POST | `/api/v1/ai/audio` | Transcribe voice stock note (Gemini) |
-| POST | `/api/v1/ai/reorder-message` | Compose multilingual reorder SMS (Gemini + Twilio) |
-
-Full interactive docs: `/docs`
+*Solving for India — built to scale from a single district to healthcare networks across states.*
