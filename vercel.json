@@ -1,14 +1,14 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "$schema": "https://vercel.sh",
   "functions": {
-    "backend/api/index.py": {
+    "api/**/*.py": {
       "runtime": "@vercel/python"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/backend/api/index.py"
+      "destination": "/api/index.py"
     }
   ]
 }
