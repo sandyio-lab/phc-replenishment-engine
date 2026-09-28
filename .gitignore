@@ -30,7 +30,13 @@ Thumbs.db
 
 # --- Secrets (never commit these) ---
 .env
+.env.save
+.env.*
+*.env
 .env.local
+*.key
+*.secret
+secrets/
 *.pem
 serviceAccountKey.json
 credentials.json
