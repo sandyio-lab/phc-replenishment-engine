@@ -101,7 +101,7 @@ Gemini is deliberately scoped to **translation, parsing, and extraction only** �
 | Role | Owner | Responsibilities |
 |---|---|---|
 | Backend Dev 1 — System Architecture & Core Logic | Shreyas | Database models (PHCs, Inventory, Vendors, Orders), reorder math, inter-PHC distance calculations, data seeding script (50+ synthetic Indian PHCs, NLEM medicine codes), REST API gateway. |
-| Backend Dev 2 — Google GenAI & Communications | *(this repo's author)* | Gemini Vision invoice parsing, Gemini audio intent/quantity extraction, multilingual SMS engine (Gemini Flash + Twilio/Fast2SMS). |
+| Backend Dev 2 — Google GenAI & Communications | Sandra | Gemini Vision invoice parsing, Gemini audio intent/quantity extraction, multilingual SMS engine (Gemini Flash + Fast2SMS). |
 | Frontend Dev 1 — PHC Mobile App / PWA | Bhavana | Worker-facing mobile web app, camera/audio capture UI, local inventory tables with expiry alerts. |
 | Frontend Dev 2 — District Admin & Network Dashboard | Darren | Kanban-style supply pipeline, interactive Leaflet.js PHC map, inter-PHC transfer modal UI. |
 
@@ -142,8 +142,7 @@ Set the following environment variables before running:
 ```
 GOOGLE_API_KEY=           # Gemini API key
 DATABASE_URL=             # PostgreSQL/SQLite connection string
-TWILIO_ACCOUNT_SID=       # or FAST2SMS_API_KEY
-TWILIO_AUTH_TOKEN=
+FAST2SMS_API_KEY=         # Fast2SMS API key for dispatching regional SMS alerts to PHC vendors
 ```
 
 ## Risk Mitigations
