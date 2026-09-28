@@ -66,22 +66,16 @@ MODEL_NAME = "gemini-2.5-flash"
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
-_API_KEY = (os.environ.get("GEMINI_API_KEY") or "").strip()
-if not _API_KEY:
-    logger.warning(
-        "GEMINI_API_KEY not set. Set it in your environment or a .env file "
-        "before calling extract_stock_updates(), or calls will fail."
-    )
-
 _client: Optional[genai.Client] = None
 
 
 def _get_client() -> genai.Client:
     global _client
-    if not _API_KEY:
-        raise RuntimeError("GEMINI_API_KEY is not configured")
+    api_key = (os.getenv("GEMINI_API_KEY") or "").strip() or (os.getenv("GOOGLE_API_KEY") or "").strip()
+    if not api_key:
+        raise RuntimeError("API key not configured")
     if _client is None:
-        _client = genai.Client(api_key=_API_KEY)
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
@@ -170,6 +164,9 @@ def extract_stock_updates(
     -------
     AudioStockExtraction — always schema-valid, never raw/untrusted text.
     """
+    if not ((os.getenv("GEMINI_API_KEY") or "").strip() or (os.getenv("GOOGLE_API_KEY") or "").strip()):
+        raise RuntimeError("API key not configured")
+
     last_error: Optional[Exception] = None
 
     for attempt in range(1, MAX_RETRIES + 2):

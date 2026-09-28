@@ -96,11 +96,8 @@ RETRY_BACKOFF_SECONDS = 1.5
 
 FAST2SMS_URL = "https://www.fast2sms.com/dev/bulkV2"
 
-_GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 _FAST2SMS_API_KEY = os.environ.get("FAST2SMS_API_KEY")
 
-if not _GEMINI_API_KEY:
-    logger.warning("GEMINI_API_KEY not set. Message composition will fail until it is.")
 if not _FAST2SMS_API_KEY:
     logger.warning(
         "FAST2SMS_API_KEY not set. dry_run mode will still work; real sending will not."
@@ -111,8 +108,11 @@ _client: Optional[genai.Client] = None
 
 def _get_client() -> genai.Client:
     global _client
+    api_key = (os.getenv("GEMINI_API_KEY") or "").strip() or (os.getenv("GOOGLE_API_KEY") or "").strip()
+    if not api_key:
+        raise RuntimeError("API key not configured")
     if _client is None:
-        _client = genai.Client(api_key=_GEMINI_API_KEY)
+        _client = genai.Client(api_key=api_key)
     return _client
 
 
@@ -210,6 +210,11 @@ def compose_reorder_message(alert: LowStockAlert, use_fallback_on_failure: bool 
     the vendor's preferred language, with an English back-translation for
     verification.
     """
+    if not ((os.getenv("GEMINI_API_KEY") or "").strip() or (os.getenv("GOOGLE_API_KEY") or "").strip()):
+        if use_fallback_on_failure:
+            return _fallback_message(alert)
+        raise RuntimeError("API key not configured")
+
     prompt_payload = alert.model_dump()
     last_error: Optional[Exception] = None
 
