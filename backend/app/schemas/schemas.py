@@ -198,7 +198,10 @@ class TransferSuggestion(BaseModel):
     nlem_code:       str
     drug_name:       str
     suggested_qty:   int
+    surplus_qty:     int
     distance_km:     float
+    duration_min:    float
+    source:          str
 
 
 # ─────────────────────────────────────────────

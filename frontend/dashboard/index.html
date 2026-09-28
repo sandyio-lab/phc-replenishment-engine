@@ -663,6 +663,18 @@ body {
   margin-bottom: 10px;
 }
 
+.route-source-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--ink-secondary);
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .map-layout { flex-direction: column; }
   .map-card, .map-sidebar { flex: 1 1 100%; width: 100%; }
@@ -865,6 +877,7 @@ body {
   ];
 
   let selectedPhcId = null;
+  let transferRenderRequestId = 0;
 
   async function loadLiveDashboardData() {
     try {
@@ -1105,7 +1118,25 @@ body {
     }).join("");
   }
 
-  function renderTransferModule() {
+  function routeSourceLabel(source) {
+    if (source === "google_maps") return "Google Maps";
+    if (source === "osrm") return "OpenStreetMap road route";
+    return "Estimated";
+  }
+
+  function renderTransferRouteLine(donor, targetPhc, linesGroup) {
+    if (!donor || !targetPhc) return;
+    const line = document.createElementNS(SVG_NS, "line");
+    line.setAttribute("x1", donor.x);
+    line.setAttribute("y1", donor.y);
+    line.setAttribute("x2", targetPhc.x);
+    line.setAttribute("y2", targetPhc.y);
+    line.setAttribute("class", "transfer-line");
+    linesGroup.appendChild(line);
+  }
+
+  async function renderTransferModule() {
+    const requestId = ++transferRenderRequestId;
     const transferSelect = document.getElementById("transfer-target-phc");
     
     if (selectedPhcId) {
@@ -1138,6 +1169,46 @@ body {
     }
 
     const targetPhc = findPhc(targetId);
+    const liveTargetId = Number(targetId);
+    if (Number.isInteger(liveTargetId) && liveTargetId > 0) {
+      try {
+        const response = await fetch(`${API_BASE}/phcs/${liveTargetId}/transfers`);
+        if (!response.ok) throw new Error(`Transfer API returned ${response.status}`);
+        const suggestions = await response.json();
+        if (requestId !== transferRenderRequestId) return;
+
+        if (!suggestions.length) {
+          listContainer.innerHTML = `<p style="color: var(--ink-secondary); font-size: 12px;">No healthy PHCs with surplus stock available for transfer.</p>`;
+          return;
+        }
+
+        listContainer.innerHTML = suggestions.map(suggestion => {
+          const donor = phcs.find(item => String(item.id) === String(suggestion.source_phc_id));
+          renderTransferRouteLine(donor, targetPhc, linesGroup);
+          return `
+            <div class="transfer-card-item">
+              <div class="transfer-card-header">
+                <span>${suggestion.source_phc_name}</span>
+                <span class="mono" style="font-size:11px; color:var(--accent);">${suggestion.distance_km} km</span>
+              </div>
+              <div class="transfer-card-details">
+                ${suggestion.drug_name}: ${suggestion.surplus_qty} surplus units; suggest ${suggestion.suggested_qty} for ${suggestion.target_phc_name}.
+                Estimated travel time: ${suggestion.duration_min} min.
+              </div>
+              <span class="route-source-badge">${routeSourceLabel(suggestion.source)}</span>
+              <button type="button" class="btn btn-primary" style="padding: 6px 10px; font-size: 11px;" onclick="alert('Stock dispatch request initiated from ${suggestion.source_phc_name} to ${suggestion.target_phc_name}. Notification sent to District Logistic Officer.')">
+                Dispatch Stock
+              </button>
+            </div>
+          `;
+        }).join("");
+        return;
+      } catch (error) {
+        if (requestId !== transferRenderRequestId) return;
+        console.warn("Live transfer suggestions unavailable; showing demo routes.", error);
+      }
+    }
+
     const healthyDonors = phcs.filter(p => p.health === "healthy" && p.id !== targetId);
 
     if (healthyDonors.length === 0) {
@@ -1148,13 +1219,7 @@ body {
     listContainer.innerHTML = healthyDonors.map(donor => {
       const dist = Math.round(Math.hypot(donor.x - targetPhc.x, donor.y - targetPhc.y) * 0.15);
 
-      const line = document.createElementNS(SVG_NS, "line");
-      line.setAttribute("x1", donor.x);
-      line.setAttribute("y1", donor.y);
-      line.setAttribute("x2", targetPhc.x);
-      line.setAttribute("y2", targetPhc.y);
-      line.setAttribute("class", "transfer-line");
-      linesGroup.appendChild(line);
+      renderTransferRouteLine(donor, targetPhc, linesGroup);
 
       return `
         <div class="transfer-card-item">
@@ -1165,6 +1230,7 @@ body {
           <div class="transfer-card-details">
             Surplus stock available for fast dispatch to <strong>${targetPhc.name}</strong>.
           </div>
+          <span class="route-source-badge">${routeSourceLabel("haversine_fallback")}</span>
           <button type="button" class="btn btn-primary" style="padding: 6px 10px; font-size: 11px;" onclick="alert('Stock dispatch request initiated from ${donor.name} to ${targetPhc.name}. Notification sent to District Logistic Officer.')">
             Dispatch Stock
           </button>

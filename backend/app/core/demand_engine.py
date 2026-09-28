@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.models.inventory import InventoryItem, StockStatus
 from app.models.phc       import PHC
 from app.schemas.schemas  import StockAlertRead, TransferSuggestion
+from ai_integration.maps_routing import rank_donors
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -281,15 +282,34 @@ def find_inter_phc_transfers(
     if not needy_items:
         return []
 
-    nearby_phcs = get_phcs_within_radius(db, target_phc_id, radius_km)
-    if not nearby_phcs:
+    target_phc: Optional[PHC] = db.query(PHC).filter(PHC.id == target_phc_id).first()
+    if not target_phc:
         return []
 
-    target_phc: Optional[PHC] = db.query(PHC).filter(PHC.id == target_phc_id).first()
+    donor_phcs: List[PHC] = (
+        db.query(PHC)
+        .filter(PHC.is_active == True, PHC.id != target_phc_id)
+        .all()
+    )
+    route_estimates = rank_donors(
+        recipient={"id": target_phc.id, "lat": target_phc.latitude, "lon": target_phc.longitude},
+        donors=[
+            {"id": phc.id, "lat": phc.latitude, "lon": phc.longitude}
+            for phc in donor_phcs
+        ],
+        radius_km=radius_km,
+    )
+    donor_by_id = {phc.id: phc for phc in donor_phcs}
+    if not route_estimates:
+        return []
+
     suggestions: List[TransferSuggestion] = []
 
     for needed_item in needy_items:
-        for donor_phc, dist_km in nearby_phcs:
+        for route in route_estimates:
+            donor_phc = donor_by_id.get(route.donor_id)
+            if not donor_phc:
+                continue
             donor_item: Optional[InventoryItem] = (
                 db.query(InventoryItem)
                 .filter(
@@ -329,7 +349,10 @@ def find_inter_phc_transfers(
                     nlem_code=needed_item.nlem_code,
                     drug_name=needed_item.drug_name,
                     suggested_qty=suggested_qty,
-                    distance_km=dist_km,
+                    surplus_qty=int(donor_surplus),
+                    distance_km=route.distance_km,
+                    duration_min=route.duration_min,
+                    source=route.source,
                 )
             )
             break
