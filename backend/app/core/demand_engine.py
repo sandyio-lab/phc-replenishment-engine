@@ -14,7 +14,7 @@ Responsibilities:
 
 import math
 from datetime import date, timedelta
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -38,6 +38,35 @@ def compute_reorder_point(
     if avg_daily_consumption <= 0:
         return 0.0
     return avg_daily_consumption * (supplier_lead_days + safety_stock_days)
+
+
+def compute_surge_adjusted_reorder_point(
+    avg_daily_consumption: float,
+    supplier_lead_days: int,
+    safety_stock_days: int,
+    district: str,
+    surge_cache: Optional[Dict[Tuple[str, int], Any]] = None,
+) -> float:
+    """Compute ROP from seasonally adjusted demand, falling back offline if needed."""
+    from ai_integration.gemini_surge_multiplier import (
+        apply_surge_to_avg_daily,
+        get_surge_multiplier,
+    )
+
+    month = date.today().month
+    cache = surge_cache if surge_cache is not None else {}
+    cache_key = (district, month)
+    surge = cache.get(cache_key)
+    if surge is None:
+        surge = get_surge_multiplier(
+            district=district,
+            month=month,
+            drug_category="default",
+        )
+        cache[cache_key] = surge
+
+    adjusted_avg = apply_surge_to_avg_daily(avg_daily_consumption, surge)
+    return compute_reorder_point(adjusted_avg, supplier_lead_days, safety_stock_days)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -124,12 +153,15 @@ def run_reorder_scan(db: Session, phc_id: int) -> List[StockAlertRead]:
     )
 
     alerts: List[StockAlertRead] = []
+    surge_cache: Dict[Tuple[str, int], Any] = {}
 
     for item in items:
-        rop = compute_reorder_point(
+        rop = compute_surge_adjusted_reorder_point(
             item.avg_daily_consumption,
             item.supplier_lead_days,
             item.safety_stock_days,
+            district=phc.district,
+            surge_cache=surge_cache,
         )
         item.reorder_point = rop
 
@@ -312,11 +344,14 @@ def find_inter_phc_transfers(
 def refresh_all_reorder_points(db: Session) -> int:
     """Re-compute and persist reorder_point for every inventory item."""
     items: List[InventoryItem] = db.query(InventoryItem).all()
+    surge_cache: Dict[Tuple[str, int], Any] = {}
     for item in items:
-        item.reorder_point = compute_reorder_point(
+        item.reorder_point = compute_surge_adjusted_reorder_point(
             item.avg_daily_consumption,
             item.supplier_lead_days,
             item.safety_stock_days,
+            district=item.phc.district,
+            surge_cache=surge_cache,
         )
     db.commit()
     return len(items)

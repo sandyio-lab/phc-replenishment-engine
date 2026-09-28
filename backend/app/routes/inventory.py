@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database     import get_db
 from app.core.demand_engine import (
-    compute_reorder_point,
+    compute_surge_adjusted_reorder_point,
     classify_stock_status,
     run_network_reorder_scan,
     refresh_all_reorder_points,
@@ -34,13 +34,15 @@ router = APIRouter(prefix="/inventory", tags=["Inventory"])
 
 @router.post("", response_model=InventoryItemRead, status_code=201)
 def create_inventory_item(payload: InventoryItemCreate, db: Session = Depends(get_db)):
-    if not db.query(PHC).filter(PHC.id == payload.phc_id).first():
+    phc = db.query(PHC).filter(PHC.id == payload.phc_id).first()
+    if not phc:
         raise HTTPException(status_code=404, detail="PHC not found.")
 
-    rop = compute_reorder_point(
+    rop = compute_surge_adjusted_reorder_point(
         payload.avg_daily_consumption,
         payload.supplier_lead_days,
         payload.safety_stock_days,
+        district=phc.district,
     )
     status = classify_stock_status(
         quantity_on_hand=payload.quantity_on_hand,
@@ -93,10 +95,11 @@ def update_inventory_item(
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(item, field, value)
 
-    item.reorder_point = compute_reorder_point(
+    item.reorder_point = compute_surge_adjusted_reorder_point(
         item.avg_daily_consumption,
         item.supplier_lead_days,
         item.safety_stock_days,
+        district=item.phc.district,
     )
     item.stock_status = classify_stock_status(
         quantity_on_hand=item.quantity_on_hand,

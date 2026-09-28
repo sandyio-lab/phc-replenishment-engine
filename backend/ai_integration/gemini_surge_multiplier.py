@@ -24,7 +24,7 @@ import time
 import random
 import logging
 from datetime import date
-from typing import Optional, List
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field, ValidationError
 from google import genai
@@ -49,20 +49,23 @@ SEASONAL_FALLBACK = {
 DEFAULT_MULTIPLIER = 1.0
 
 
-class SurgeAssessment(BaseModel):
+class SurgePrediction(BaseModel):
     multiplier: float = Field(ge=1.0, le=2.5)
     affected_drug_categories: List[str] = Field(default_factory=list)
     rationale: str
     confidence: float = Field(ge=0.0, le=1.0)
-    source: str = Field(default="gemini")  # "gemini" | "seasonal_fallback"
+    source: Literal["gemini", "seasonal_fallback"] = "gemini"
 
 
-def _seasonal_fallback(district: str, month: int, drug_category: str = "default") -> SurgeAssessment:
+SurgeAssessment = SurgePrediction
+
+
+def _seasonal_fallback(district: str, month: int, drug_category: str = "default") -> SurgePrediction:
     table = SEASONAL_FALLBACK.get(month, {})
     multiplier = table.get(drug_category, table.get("default", DEFAULT_MULTIPLIER))
-    return SurgeAssessment(
+    return SurgePrediction(
         multiplier=multiplier,
-        affected_drug_categories=[drug_category] if multiplier > 1.0 else [],
+        affected_drug_categories=[drug_category] if drug_category != "default" and multiplier > 1.0 else [],
         rationale=f"Seasonal baseline for month={month}, district={district} (no live signal / API unavailable).",
         confidence=0.5,
         source="seasonal_fallback",
@@ -75,16 +78,15 @@ def get_surge_multiplier(
     reported_signal: Optional[str] = None,
     drug_category: str = "default",
     max_retries: int = 3,
-) -> SurgeAssessment:
+) -> SurgePrediction:
     """
-    Returns a SurgeAssessment with a consumption multiplier for the given
+    Returns a validated SurgePrediction with a consumption multiplier for the given
     district/month, optionally reasoning over a free-text reported_signal.
     Falls back to the deterministic seasonal table on any API failure.
     """
     month = month or date.today().month
     api_key = (os.getenv("GEMINI_API_KEY") or "").strip() or (os.getenv("GOOGLE_API_KEY") or "").strip()
     if not api_key:
-        logger.warning("GEMINI_API_KEY not set — using seasonal fallback.")
         return _seasonal_fallback(district, month, drug_category)
 
     prompt = f"""You are assisting a rural Indian Primary Health Centre supply chain system.
@@ -107,7 +109,6 @@ Return ONLY JSON matching this schema, no other text:
   "confidence": float (0.0-1.0)
 }}"""
 
-    last_error = None
     for attempt in range(max_retries):
         try:
             client = genai.Client(api_key=api_key)
@@ -121,23 +122,20 @@ Return ONLY JSON matching this schema, no other text:
             )
             data = json.loads(response.text)
             data["source"] = "gemini"
-            return SurgeAssessment(**data)
+            return SurgePrediction.model_validate(data)
 
         except (ValidationError, json.JSONDecodeError, KeyError) as e:
-            logger.error("Surge multiplier: malformed Gemini response (attempt %d): %s", attempt + 1, e)
-            last_error = e
+            logger.debug("Surge multiplier response validation failed on attempt %d: %s", attempt + 1, e)
         except Exception as e:  # network / API errors
-            logger.error("Surge multiplier: Gemini call failed (attempt %d): %s", attempt + 1, e)
-            last_error = e
+            logger.debug("Surge multiplier call failed on attempt %d: %s", attempt + 1, e)
 
         if attempt < max_retries - 1:
             time.sleep((2 ** attempt) + random.uniform(0, 0.5))
 
-    logger.warning("Surge multiplier: all %d attempts failed (%s) — using seasonal fallback.", max_retries, last_error)
     return _seasonal_fallback(district, month, drug_category)
 
 
-def apply_surge_to_avg_daily(avg_daily_consumption: float, surge: SurgeAssessment) -> float:
+def apply_surge_to_avg_daily(avg_daily_consumption: float, surge: SurgePrediction) -> float:
     """Apply the multiplier to a raw avg_daily_consumption value."""
     return round(avg_daily_consumption * surge.multiplier, 2)
 
