@@ -117,20 +117,33 @@ Gemini is deliberately scoped to **translation, parsing, extraction, and bounded
 ## Project Structure
 
 ```
-.
+phc-replenishment-engine/
 ├── backend/
-│   ├── models/            # PHC, Inventory, Vendor, Order schemas
-│   ├── services/          # reorder math, distance calc, demand engine
-│   ├── genai/              # Gemini Vision / Audio / SMS / surge multiplier handlers, road routing
-│   ├── api/                # Flask/FastAPI routes
-│   └── scripts/            # synthetic data seeding
+│   ├── ai_integration/
+│   │   ├── gemini_vision_ocr.py         # Invoice/package photo → structured JSON
+│   │   ├── gemini_audio_stock_update.py # Voice note → stock movement JSON
+│   │   ├── gemini_sms_engine.py         # Vernacular vendor requisition + SMS dispatch
+│   │   ├── gemini_surge_multiplier.py   # Demand-surge risk assessment
+│   │   ├── maps_routing.py              # Road distance/ETA (OSRM / Google Maps / fallback)
+│   │   └── run_test.py                  # Manual test runner for AI modules
+│   ├── app/
+│   │   ├── core/                        # Database setup, reorder math, demand engine
+│   │   ├── models/                      # PHC, Inventory, Vendor, Order schemas
+│   │   ├── schemas/                     # Pydantic request/response schemas
+│   │   ├── routes/                      # FastAPI routes (/api/v1)
+│   │   └── main.py                      # FastAPI entry point
+│   └── seed.py                          # Synthetic PHC, vendor, medicine and order data
 ├── frontend/
-│   ├── worker-app/         # PHC staff PWA (camera, voice, inventory view)
-│   └── admin-dashboard/    # district admin pipeline + map
+│   ├── Worker/                          # PHC staff app (camera, voice, inventory view)
+│   └── Dashboard/                       # District admin pipeline, map, transfers
+├── context/                             # Hackathon guidelines, prototype and team notes
+├── docs/
+├── api/
+├── data/
+├── requirements.txt
+├── vercel.json                          # Vercel deployment config
 └── README.md
 ```
-*(Update to match the actual repository layout before submission.)*
-
 ## Getting Started
 
 ```bash
