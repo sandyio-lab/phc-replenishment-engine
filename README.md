@@ -85,6 +85,7 @@ Gemini-formatted multilingual vendor requisitions dispatched via SMS/WhatsApp; l
 | Document Scanning | Gemini Vision API | Extracts batch details, dosage, and expiry dates from invoices and packaging photos. |
 | Vernacular Communications | Gemini Flash API | Translates structured order payloads into localized, polite procurement text/voice notes for district suppliers. |
 | Voice Command Parsing | Gemini Multimodal | Converts rural dialect audio logs into deterministic JSON database updates. |
+| Predictive Surge Detection | Gemini Flash API (structured JSON) | Reasons over district, month, and field-reported signals (e.g. "flu cases rising in Velhe block") to output a validated demand-surge multiplier (1.0–2.5x) with affected drug categories, rationale, and confidence. The multiplier feeds the reorder engine so orders are placed *before* a seasonal or outbreak-driven stock-out. |
 
 Gemini is deliberately scoped to **translation, parsing, and extraction only** — all quantities, drug IDs, and reorder math are computed deterministically in backend code (see [Risk Mitigations](#risk-mitigations)).
 
