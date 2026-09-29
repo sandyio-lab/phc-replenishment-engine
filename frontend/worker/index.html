@@ -18,8 +18,7 @@
     .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
     .animate-spin  { animation: spin  0.7s linear infinite; }
     /* layout */
-    .flex { display: flex; } .hidden { display: none; } .grid { display: grid; }
-      .flex { display: flex; } .hidden { display: none !important; } .grid { display: grid; }
+    .flex { display: flex; } .hidden { display: none !important; } .grid { display: grid; }
     .flex-col { flex-direction: column; } .flex-1 { flex: 1 1 0%; } .flex-wrap { flex-wrap: wrap; }
     .items-center { align-items: center; } .items-start { align-items: flex-start; }
     .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
@@ -810,8 +809,7 @@ let currentPhotoBlob  = null;
 let currentAudioBlob  = null;
 let audioAttachedFlag = false;
 let isRecording       = false;
-let mediaRecorder     = null;
-let audioChunks       = [];
+let audioCapture      = null;
 let entryCounter      = 0;
 let currentLang       = "en";
 
@@ -1118,10 +1116,11 @@ async function handlePhotoCapture(event) {
   try {
     const form = new FormData();
     form.append("file", file, file.name || "invoice.jpg");
+    form.append("target_language", currentLang);
     const res = await fetch(API_BASE + "/ai/invoice", { method: "POST", body: form });
-    if (!res.ok) throw new Error(await res.text());
+    if (!res.ok) throw new Error(await getAiErrorMessage(res));
     const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    if (data.error) throw new Error(data.detail || data.error);
     if (data.line_items && data.line_items.length > 0) {
       const item = data.line_items[0];
       if (item.drug_name)   document.getElementById("entry-item").value   = item.drug_name;
@@ -1132,8 +1131,8 @@ async function handlePhotoCapture(event) {
     } else {
       showToast("Photo scanned — no items detected. Fill in manually.", "info");
     }
-  } catch {
-    showToast("AI extraction unavailable — fill in manually.", "error");
+  } catch (error) {
+    showToast("Photo extraction failed — " + error.message, "error");
   } finally {
     clearAiStatus();
   }
@@ -1149,53 +1148,149 @@ async function toggleAudioRecording() {
 
   if (!isRecording) {
     try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) throw new Error("Audio recording is not supported in this browser.");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks   = [];
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-      mediaRecorder.onstop = async () => {
-        currentAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
-        document.getElementById("audio-player").src = URL.createObjectURL(currentAudioBlob);
-        document.getElementById("audio-preview-box").classList.remove("hidden");
-        audioAttachedFlag = true;
-        setAiStatus("Transcribing voice note with Gemini…");
-        try {
-          const form = new FormData();
-          form.append("file", currentAudioBlob, "voice.wav");
-          form.append("mime_type", "audio/wav");
-          const res = await fetch(API_BASE + "/ai/audio", { method: "POST", body: form });
-          if (!res.ok) throw new Error(await res.text());
-          const data = await res.json();
-          if (data.error) throw new Error(data.error);
-          if (data.movements && data.movements.length > 0) {
-            const mv = data.movements[0];
-            if (mv.drug_name)      document.getElementById("entry-item").value = mv.drug_name;
-            if (mv.quantity_delta) document.getElementById("entry-qty").value  = Math.abs(mv.quantity_delta);
-            showToast('✓ Gemini: "' + (data.raw_transcript || mv.drug_name) + '"', "success");
-          } else {
-            showToast("Voice processed — no movement detected. Fill in manually.", "info");
-          }
-        } catch {
-          showToast("AI transcription unavailable — fill in manually.", "error");
-        } finally {
-          clearAiStatus();
-        }
+      const context = new AudioContextClass();
+      await context.resume();
+      const source = context.createMediaStreamSource(stream);
+      const processor = context.createScriptProcessor(4096, 1, 1);
+      const muteOutput = context.createGain();
+      const samples = [];
+      muteOutput.gain.value = 0;
+      processor.onaudioprocess = event => {
+        samples.push(new Float32Array(event.inputBuffer.getChannelData(0)));
       };
-      mediaRecorder.start();
+      source.connect(processor);
+      processor.connect(muteOutput);
+      muteOutput.connect(context.destination);
+      audioCapture = { stream, context, source, processor, muteOutput, samples };
       isRecording = true;
       btn.style.background   = "#ffe4e6";
       btn.style.borderColor  = "#fb7185";
       icon.classList.replace("text-emerald-600", "text-rose-600");
       label.innerText = "Stop";
-    } catch {
-      alert("Microphone access required for recording voice notes.");
+    } catch (error) {
+      showToast(error.message || "Microphone access required for voice recording.", "error");
     }
   } else {
-    if (mediaRecorder) { mediaRecorder.stop(); isRecording = false; }
     btn.style.background  = "";
     btn.style.borderColor = "";
     icon.classList.replace("text-rose-600", "text-emerald-600");
     label.innerText = translations[currentLang].voiceNote;
+    isRecording = false;
+    await finishAudioCapture();
+  }
+}
+
+async function finishAudioCapture() {
+  const capture = audioCapture;
+  audioCapture = null;
+  if (!capture) return;
+
+  capture.processor.disconnect();
+  capture.source.disconnect();
+  capture.muteOutput.disconnect();
+  capture.stream.getTracks().forEach(track => track.stop());
+  await capture.context.close();
+  if (!capture.samples.length) {
+    showToast("No audio was recorded. Please try again.", "error");
+    return;
+  }
+
+  setAiStatus("Preparing voice note…");
+  try {
+    currentAudioBlob = encodePcmToWav(capture.samples, capture.context.sampleRate);
+    document.getElementById("audio-player").src = URL.createObjectURL(currentAudioBlob);
+    document.getElementById("audio-preview-box").classList.remove("hidden");
+    audioAttachedFlag = true;
+    setAiStatus("Transcribing voice note with Gemini…");
+
+    const form = new FormData();
+    form.append("file", currentAudioBlob, "voice.wav");
+    form.append("mime_type", "audio/wav");
+    form.append("target_language", currentLang);
+    const data = await extractAudioWithBusyRetry(form);
+
+    if (data.movements && data.movements.length > 0) {
+      const movement = data.movements[0];
+      if (movement.drug_name) document.getElementById("entry-item").value = movement.drug_name;
+      const extractedQuantity = Number.isFinite(movement.quantity) && movement.quantity > 0
+        ? movement.quantity
+        : Math.abs(movement.quantity_delta || 0);
+      if (extractedQuantity > 0) document.getElementById("entry-qty").value = extractedQuantity;
+      showToast('✓ Gemini: "' + (data.raw_transcript || movement.drug_name) + '"', "success");
+    } else {
+      showToast("Voice processed — no movement detected. Fill in manually.", "info");
+    }
+  } catch (error) {
+    showToast("Audio extraction failed — " + error.message, "error");
+  } finally {
+    clearAiStatus();
+  }
+}
+
+async function extractAudioWithBusyRetry(form) {
+  const retryDelays = [1500, 3000];
+
+  for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+    if (attempt > 0) setAiStatus(`Gemini is busy. Retrying (${attempt}/${retryDelays.length})…`);
+    const response = await fetch(API_BASE + "/ai/audio", { method: "POST", body: form });
+    if (response.ok) {
+      const data = await response.json();
+      if (data.error) throw new Error(data.detail || data.error);
+      return data;
+    }
+
+    const message = await getAiErrorMessage(response);
+    const isTemporaryBusy = response.status === 503 && /temporarily busy|unavailable|high demand/i.test(message);
+    if (!isTemporaryBusy || attempt === retryDelays.length) throw new Error(message);
+    await new Promise(resolve => setTimeout(resolve, retryDelays[attempt]));
+  }
+
+  throw new Error("Audio extraction could not be completed.");
+}
+
+function encodePcmToWav(chunks, sampleRate) {
+  const sampleCount = chunks.reduce((total, chunk) => total + chunk.length, 0);
+  const wavBuffer = new ArrayBuffer(44 + sampleCount * 2);
+  const view = new DataView(wavBuffer);
+  const writeText = (offset, text) => {
+    for (let index = 0; index < text.length; index++) view.setUint8(offset + index, text.charCodeAt(index));
+  };
+
+  writeText(0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  writeText(8, "WAVE");
+  writeText(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, "data");
+  view.setUint32(40, sampleCount * 2, true);
+
+  let offset = 44;
+  for (const chunk of chunks) {
+    for (const value of chunk) {
+      const sample = Math.max(-1, Math.min(1, value));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+      offset += 2;
+    }
+  }
+  return new Blob([wavBuffer], { type: "audio/wav" });
+}
+
+async function getAiErrorMessage(response) {
+  const responseText = await response.text();
+  try {
+    const payload = JSON.parse(responseText);
+    return payload.detail || payload.error || responseText || `Request failed (${response.status})`;
+  } catch {
+    return responseText || `Request failed (${response.status})`;
   }
 }
 
