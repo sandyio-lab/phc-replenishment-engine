@@ -4,1106 +4,1561 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PHC Stock Register — Inventory & Tracking App</title>
-  
-  <!-- EMBEDDED OFF-LINE TAILWIND & UTILITY CSS -->
   <style>
-    /*! Reset & Base Styles */
     *, ::before, ::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: #e2e8f0; }
-    html { line-height: 1.5; -webkit-text-size-adjust: 100%; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    body { margin: 0; line-height: inherit; }
+    html { line-height: 1.5; -webkit-text-size-adjust: 100%; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { margin: 0; }
     button, input, select, textarea { font-family: inherit; font-size: 100%; font-weight: inherit; line-height: inherit; color: inherit; margin: 0; padding: 0; }
-    button, [type='button'], [type='reset'], [type='submit'] { -webkit-appearance: button; background-color: transparent; background-image: none; cursor: pointer; }
-    img, svg, video, canvas, audio, iframe, embed, object { display: block; vertical-align: middle; }
-    img, video { max-width: 100%; height: auto; }
-
-    /* Custom Number Input Spinner Hide */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    button { -webkit-appearance: button; background-color: transparent; background-image: none; cursor: pointer; }
+    img, svg, video { display: block; vertical-align: middle; max-width: 100%; height: auto; }
+    input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type=number] { -moz-appearance: textfield; }
-
-    /* Keyframes */
     @keyframes pulse { 50% { opacity: .5; } }
-    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-
-    /* Utility Classes Used in App */
-    .absolute { position: absolute; }
-    .relative { position: relative; }
-    .fixed { position: fixed; }
-    .inset-0 { top: 0px; right: 0px; bottom: 0px; left: 0px; }
-    .top-8 { top: 2rem; }
-    .left-8 { left: 2rem; }
-    .bottom-10 { bottom: 2.5rem; }
-    .left-16 { left: 4rem; }
-    .top-16 { top: 4rem; }
-    .right-6 { right: 1.5rem; }
-    .z-50 { z-index: 50; }
-
-    .block { display: block; }
-    .flex { display: flex; }
-    .inline-flex { display: inline-flex; }
-    .grid { display: grid; }
-    .hidden { display: none; }
-
-    .h-full { height: 100%; }
-    .h-1.5 { height: 0.375rem; }
-    .h-2 { height: 0.5rem; }
-    .h-2.5 { height: 0.625rem; }
-    .h-5 { height: 1.25rem; }
-    .h-7 { height: 1.75rem; }
-    .h-8 { height: 2rem; }
-    .h-10 { height: 2.5rem; }
-    .h-60 { height: 15rem; }
-    .min-h-screen { min-height: 100vh; }
-    .max-h-\[90vh\] { max-height: 90vh; }
-
-    .w-full { width: 100%; }
-    .w-2 { width: 0.5rem; }
-    .w-2.5 { width: 0.625rem; }
-    .w-5 { width: 1.25rem; }
-    .w-7 { width: 1.75rem; }
-    .w-10 { width: 2.5rem; }
-    .max-w-lg { max-width: 32rem; }
-    .max-w-md { max-width: 28rem; }
-
-    .flex-1 { flex: 1 1 0%; }
-    .flex-col { flex-direction: column; }
-    .flex-wrap { flex-wrap: wrap; }
-    .items-start { align-items: flex-start; }
-    .items-center { align-items: center; }
-    .items-end { align-items: flex-end; }
-    .justify-center { justify-content: center; }
-    .justify-between { justify-content: space-between; }
-    .justify-end { justify-content: flex-end; }
-
-    .gap-1 { gap: 0.25rem; }
-    .gap-2 { gap: 0.5rem; }
-    .space-x-1 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.25rem; }
-    .space-x-1\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.375rem; }
-    .space-x-2 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.5rem; }
-    .space-x-3 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.75rem; }
-    .space-x-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-left: 0.875rem; }
-    .space-y-1 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.25rem; }
-    .space-y-2 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.5rem; }
-    .space-y-2\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.625rem; }
-    .space-y-3 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem; }
-    .space-y-3\.5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.875rem; }
-    .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 1rem; }
-
-    .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-    .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-
-    .overflow-hidden { overflow: hidden; }
-    .overflow-y-auto { overflow-y: auto; }
-    .object-cover { object-fit: cover; }
-
-    .rounded { border-radius: 0.25rem; }
-    .rounded-md { border-radius: 0.375rem; }
-    .rounded-lg { border-radius: 0.5rem; }
-    .rounded-xl { border-radius: 0.75rem; }
-    .rounded-2xl { border-radius: 1rem; }
-    .rounded-full { border-radius: 9999px; }
-
-    .border { border-width: 1px; }
-    .border-t { border-top-width: 1px; }
-    .border-b { border-bottom-width: 1px; }
-
-    .border-slate-200 { border-color: #e2e8f0; }
-    .border-slate-300 { border-color: #cbd5e1; }
-    .border-emerald-200 { border-color: #a7f3d0; }
-    .border-emerald-300 { border-color: #6ee7b7; }
-    .border-emerald-500 { border-color: #10b981; }
-    .border-rose-200 { border-color: #fecdd3; }
-    .border-rose-300 { border-color: #fda4af; }
-    .border-rose-400 { border-color: #fb7185; }
-    .border-purple-200 { border-color: #e9d5ff; }
-    .border-amber-200 { border-color: #fde68a; }
-    .border-blue-200 { border-color: #bfdbfe; }
-
-    .bg-white { background-color: #ffffff; }
-    .bg-slate-50 { background-color: #f8fafc; }
-    .bg-slate-100 { background-color: #f1f5f9; }
-    .bg-slate-200 { background-color: #e2e8f0; }
-    .bg-slate-700 { background-color: #334155; }
-    .bg-slate-800 { background-color: #1e293b; }
-    .bg-slate-900\/60 { background-color: rgba(15, 23, 42, 0.6); }
-    .bg-emerald-50 { background-color: #ecfdf5; }
-    .bg-emerald-100 { background-color: #d1fae5; }
-    .bg-emerald-500 { background-color: #10b981; }
-    .bg-emerald-500\/80 { background-color: rgba(16, 185, 129, 0.8); }
-    .bg-emerald-600 { background-color: #059669; }
-    .bg-emerald-700 { background-color: #047857; }
-    .bg-emerald-800\/40 { background-color: rgba(6, 78, 59, 0.4); }
-    .bg-rose-100 { background-color: #ffe4e6; }
-    .bg-rose-500 { background-color: #f43f5e; }
-    .bg-purple-50 { background-color: #faf5ff; }
-    .bg-purple-100 { background-color: #f3e8ff; }
-    .bg-purple-500 { background-color: #a855f7; }
-    .bg-amber-100 { background-color: #fef3c7; }
-    .bg-amber-500 { background-color: #f59e0b; }
-    .bg-blue-50 { background-color: #eff6ff; }
-
-    .p-0 { padding: 0px; }
-    .p-1 { padding: 0.25rem; }
-    .p-2 { padding: 0.5rem; }
-    .p-2\.5 { padding: 0.625rem; }
-    .p-3 { padding: 0.75rem; }
-    .p-3\.5 { padding: 0.875rem; }
-    .p-4 { padding: 1rem; }
-    .p-5 { padding: 1.25rem; }
-    .px-1\.5 { padding-left: 0.375rem; padding-right: 0.375rem; }
-    .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
-    .px-2\.5 { padding-left: 0.625rem; padding-right: 0.625rem; }
-    .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-    .px-3\.5 { padding-left: 0.875rem; padding-right: 0.875rem; }
-    .px-4 { padding-left: 1rem; padding-right: 1rem; }
-    .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
-    .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-    .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
-    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-    .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
-    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-    .pb-2 { padding-bottom: 0.5rem; }
-    .pb-2\.5 { padding-bottom: 0.625rem; }
-    .pb-3 { padding-bottom: 0.75rem; }
-    .pt-1 { padding-top: 0.25rem; }
-    .pt-2 { padding-top: 0.5rem; }
-    .pt-3 { padding-top: 0.75rem; }
-
-    .m-0 { margin: 0px; }
-    .my-1 { margin-top: 0.25rem; margin-bottom: 0.25rem; }
-    .mt-0\.5 { margin-top: 0.125rem; }
-    .mb-1 { margin-bottom: 0.25rem; }
-    .mb-2 { margin-bottom: 0.5rem; }
-    .mr-1 { margin-right: 0.25rem; }
-
-    .text-center { text-align: center; }
-    .text-left { text-align: left; }
-
-    .font-sans { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    .font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .font-medium { font-weight: 500; }
-    .font-semibold { font-weight: 600; }
-    .font-bold { font-weight: 700; }
-    .font-extrabold { font-weight: 800; }
-
-    .text-\[9px\] { font-size: 9px; }
-    .text-\[10px\] { font-size: 10px; }
-    .text-\[11px\] { font-size: 11px; }
-    .text-xs { font-size: 0.75rem; line-height: 1rem; }
-    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-    .text-base { font-size: 1rem; line-height: 1.5rem; }
-    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
-    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
-
-    .uppercase { text-transform: uppercase; }
-    .tracking-wide { letter-spacing: 0.025em; }
-    .tracking-tight { letter-spacing: -0.025em; }
-
-    .text-white { color: #ffffff; }
-    .text-slate-400 { color: #94a3b8; }
-    .text-slate-500 { color: #64748b; }
-    .text-slate-600 { color: #475569; }
-    .text-slate-700 { color: #334155; }
-    .text-slate-800 { color: #1e293b; }
-    .text-slate-900 { color: #0f172a; }
-    .text-emerald-100 { color: #d1fae5; }
-    .text-emerald-600 { color: #059669; }
-    .text-emerald-700 { color: #047857; }
-    .text-emerald-800 { color: #065f46; }
-    .text-rose-600 { color: #e11d48; }
-    .text-rose-800 { color: #9f1239; }
-    .text-purple-600 { color: #9333ea; }
-    .text-purple-700 { color: #7e22ce; }
-    .text-purple-800 { color: #6b21a8; }
-    .text-purple-900 { color: #581c87; }
-    .text-amber-600 { color: #d97706; }
-    .text-blue-700 { color: #1d4ed8; }
-
-    .placeholder-slate-400::placeholder { color: #94a3b8; }
-
-    .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); }
-    .shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-    .shadow-xl { box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); }
-    .shadow-2xl { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); }
-
-    .backdrop-blur-sm { backdrop-filter: blur(4px); }
-    .opacity-20 { opacity: 0.2; }
-    .cursor-pointer { cursor: pointer; }
-
-    .transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-    .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-    .duration-500 { transition-duration: 500ms; }
-
-    .hover\:bg-slate-50:hover { background-color: #f8fafc; }
-    .hover\:bg-slate-100:hover { background-color: #f1f5f9; }
-    .hover\:bg-slate-900:hover { background-color: #0f172a; }
-    .hover\:bg-emerald-700:hover { background-color: #047857; }
-    .hover\:text-slate-600:hover { color: #475569; }
-    .hover\:text-slate-900:hover { color: #0f172a; }
-    .hover\:border-emerald-500:hover { border-color: #10b981; }
-
-    .focus\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
-    .focus\:border-emerald-500:focus { border-color: #10b981; }
-    .focus\:ring-1:focus { box-shadow: 0 0 0 1px #10b981; }
-    .focus\:ring-emerald-500:focus { --tw-ring-color: #10b981; }
-
-    .active\:scale-\[0\.99\]:active { transform: scale(0.99); }
-
-    @media (min-width: 640px) {
-      .sm\:p-4 { padding: 1rem; }
-      .sm\:rounded-2xl { border-radius: 1rem; }
-      .sm\:min-h-\[850px\] { min-height: 850px; }
-      .sm\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-      .sm\:text-\[11px\] { font-size: 11px; }
-    }
-
-    @media (min-width: 768px) {
-      .md\:max-w-xl { max-width: 36rem; }
-    }
+    @keyframes spin  { to { transform: rotate(360deg); } }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    .animate-spin  { animation: spin  0.7s linear infinite; }
+    /* layout */
+    .flex { display: flex; } .hidden { display: none; } .grid { display: grid; }
+    .flex-col { flex-direction: column; } .flex-1 { flex: 1 1 0%; } .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; } .items-start { align-items: flex-start; }
+    .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
+    .grid-cols-2 { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .grid-cols-3 { grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .grid-cols-4 { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .gap-2 { gap:.5rem; } .gap-1 { gap:.25rem; }
+    .space-x-2>:not([hidden])~:not([hidden]){margin-left:.5rem;}
+    .space-x-3>:not([hidden])~:not([hidden]){margin-left:.75rem;}
+    .space-x-3\.5>:not([hidden])~:not([hidden]){margin-left:.875rem;}
+    .space-y-1>:not([hidden])~:not([hidden]){margin-top:.25rem;}
+    .space-y-2>:not([hidden])~:not([hidden]){margin-top:.5rem;}
+    .space-y-3>:not([hidden])~:not([hidden]){margin-top:.75rem;}
+    .space-y-3\.5>:not([hidden])~:not([hidden]){margin-top:.875rem;}
+    .space-y-4>:not([hidden])~:not([hidden]){margin-top:1rem;}
+    /* position */
+    .fixed{position:fixed;} .relative{position:relative;} .absolute{position:absolute;}
+    .inset-0{top:0;right:0;bottom:0;left:0;} .z-50{z-index:50;}
+    /* size */
+    .w-full{width:100%;} .w-2{width:.5rem;} .w-2\.5{width:.625rem;} .w-4{width:1rem;} .w-5{width:1.25rem;} .w-7{width:1.75rem;} .w-10{width:2.5rem;}
+    .h-1\.5{height:.375rem;} .h-5{height:1.25rem;} .h-7{height:1.75rem;} .h-8{height:2rem;} .h-10{height:2.5rem;} .h-60{height:15rem;} .h-full{height:100%;}
+    .max-w-lg{max-width:32rem;} .max-w-md{max-width:28rem;} .max-h-\[90vh\]{max-height:90vh;} .max-h-72{max-height:18rem;}
+    .min-h-screen{min-height:100vh;}
+    /* overflow */
+    .overflow-hidden{overflow:hidden;} .overflow-y-auto{overflow-y:auto;} .object-cover{object-fit:cover;}
+    /* radius */
+    .rounded{border-radius:.25rem;} .rounded-lg{border-radius:.5rem;} .rounded-xl{border-radius:.75rem;} .rounded-2xl{border-radius:1rem;} .rounded-full{border-radius:9999px;}
+    /* borders */
+    .border{border-width:1px;} .border-t{border-top-width:1px;} .border-b{border-bottom-width:1px;}
+    .border-slate-200{border-color:#e2e8f0;} .border-slate-300{border-color:#cbd5e1;}
+    .border-emerald-200{border-color:#a7f3d0;} .border-emerald-300{border-color:#6ee7b7;} .border-emerald-500{border-color:#10b981;}
+    .border-rose-200{border-color:#fecdd3;} .border-rose-300{border-color:#fda4af;} .border-rose-400{border-color:#fb7185;}
+    .border-purple-200{border-color:#e9d5ff;} .border-amber-200{border-color:#fde68a;}
+    /* bg */
+    .bg-white{background-color:#fff;} .bg-slate-50{background-color:#f8fafc;} .bg-slate-100{background-color:#f1f5f9;} .bg-slate-200{background-color:#e2e8f0;} .bg-slate-800{background-color:#1e293b;}
+    .bg-slate-900\/60{background-color:rgba(15,23,42,.6);}
+    .bg-emerald-50{background-color:#ecfdf5;} .bg-emerald-100{background-color:#d1fae5;} .bg-emerald-500{background-color:#10b981;} .bg-emerald-600{background-color:#059669;} .bg-emerald-700{background-color:#047857;}
+    .bg-emerald-500\/80{background-color:rgba(16,185,129,.8);} .bg-emerald-800\/40{background-color:rgba(6,78,59,.4);}
+    .bg-rose-100{background-color:#ffe4e6;} .bg-rose-500{background-color:#f43f5e;}
+    .bg-purple-50{background-color:#faf5ff;} .bg-purple-100{background-color:#f3e8ff;} .bg-purple-500{background-color:#a855f7;}
+    .bg-amber-100{background-color:#fef3c7;} .bg-amber-500{background-color:#f59e0b;}
+    /* padding */
+    .p-1{padding:.25rem;} .p-2{padding:.5rem;} .p-2\.5{padding:.625rem;} .p-3{padding:.75rem;} .p-3\.5{padding:.875rem;} .p-4{padding:1rem;} .p-5{padding:1.25rem;}
+    .px-2{padding-left:.5rem;padding-right:.5rem;} .px-2\.5{padding-left:.625rem;padding-right:.625rem;} .px-3{padding-left:.75rem;padding-right:.75rem;} .px-3\.5{padding-left:.875rem;padding-right:.875rem;} .px-4{padding-left:1rem;padding-right:1rem;}
+    .py-0\.5{padding-top:.125rem;padding-bottom:.125rem;} .py-1{padding-top:.25rem;padding-bottom:.25rem;} .py-1\.5{padding-top:.375rem;padding-bottom:.375rem;} .py-2{padding-top:.5rem;padding-bottom:.5rem;} .py-2\.5{padding-top:.625rem;padding-bottom:.625rem;} .py-3{padding-top:.75rem;padding-bottom:.75rem;}
+    .pb-2{padding-bottom:.5rem;} .pb-2\.5{padding-bottom:.625rem;} .pt-2{padding-top:.5rem;} .pt-3{padding-top:.75rem;}
+    /* margin */
+    .m-0{margin:0;} .my-1{margin-top:.25rem;margin-bottom:.25rem;} .mt-0\.5{margin-top:.125rem;} .mb-1{margin-bottom:.25rem;} .mb-2{margin-bottom:.5rem;} .mr-1{margin-right:.25rem;} .mx-auto{margin-left:auto;margin-right:auto;}
+    /* text */
+    .text-center{text-align:center;} .text-left{text-align:left;}
+    .font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;}
+    .font-medium{font-weight:500;} .font-semibold{font-weight:600;} .font-bold{font-weight:700;} .font-extrabold{font-weight:800;}
+    .text-\[9px\]{font-size:9px;} .text-\[10px\]{font-size:10px;} .text-\[11px\]{font-size:11px;}
+    .text-xs{font-size:.75rem;line-height:1rem;} .text-sm{font-size:.875rem;line-height:1.25rem;} .text-base{font-size:1rem;line-height:1.5rem;} .text-lg{font-size:1.125rem;line-height:1.75rem;} .text-xl{font-size:1.25rem;line-height:1.75rem;} .text-2xl{font-size:1.5rem;line-height:2rem;}
+    .uppercase{text-transform:uppercase;} .tracking-tight{letter-spacing:-.025em;}
+    .text-white{color:#fff;} .text-slate-400{color:#94a3b8;} .text-slate-500{color:#64748b;} .text-slate-600{color:#475569;} .text-slate-700{color:#334155;} .text-slate-800{color:#1e293b;} .text-slate-900{color:#0f172a;}
+    .text-emerald-100{color:#d1fae5;} .text-emerald-600{color:#059669;} .text-emerald-700{color:#047857;} .text-emerald-800{color:#065f46;}
+    .text-rose-600{color:#e11d48;} .text-rose-800{color:#9f1239;}
+    .text-purple-600{color:#9333ea;} .text-purple-800{color:#6b21a8;} .text-purple-900{color:#581c87;}
+    .text-amber-600{color:#d97706;}
+    .placeholder-slate-400::placeholder{color:#94a3b8;}
+    /* shadow */
+    .shadow-sm{box-shadow:0 1px 2px 0 rgb(0 0 0/.05);} .shadow-md{box-shadow:0 4px 6px -1px rgb(0 0 0/.1),0 2px 4px -2px rgb(0 0 0/.1);} .shadow-xl{box-shadow:0 20px 25px -5px rgb(0 0 0/.1),0 8px 10px -6px rgb(0 0 0/.1);} .shadow-2xl{box-shadow:0 25px 50px -12px rgb(0 0 0/.25);}
+    .backdrop-blur-sm{backdrop-filter:blur(4px);}
+    /* transition */
+    .transition{transition-property:color,background-color,border-color,opacity,box-shadow,transform;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:150ms;}
+    .duration-500{transition-duration:500ms;}
+    .hover\:bg-slate-50:hover{background-color:#f8fafc;} .hover\:bg-slate-100:hover{background-color:#f1f5f9;} .hover\:bg-slate-900:hover{background-color:#0f172a;} .hover\:bg-emerald-50:hover{background-color:#ecfdf5;} .hover\:bg-emerald-700:hover{background-color:#047857;} .hover\:bg-emerald-800\/60:hover{background-color:rgba(6,78,59,.6);}
+    .hover\:border-emerald-300:hover{border-color:#6ee7b7;} .hover\:border-emerald-500:hover{border-color:#10b981;}
+    .hover\:text-slate-900:hover{color:#0f172a;} .hover\:text-emerald-800:hover{color:#065f46;}
+    .focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px;}
+    .focus\:border-emerald-500:focus{border-color:#10b981;}
+    .focus\:ring-1:focus{box-shadow:0 0 0 1px #10b981;}
+    .active\:scale-\[0\.99\]:active{transform:scale(.99);}
+    @media(min-width:640px){.sm\:p-4{padding:1rem;} .sm\:rounded-2xl{border-radius:1rem;} .sm\:min-h-\[850px\]{min-height:850px;} .sm\:text-sm{font-size:.875rem;line-height:1.25rem;} .sm\:text-\[11px\]{font-size:11px;}}
+    @media(min-width:768px){.md\:max-w-xl{max-width:36rem;}}
+    /* spinner */
+    .spinner{display:inline-block;width:1rem;height:1rem;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+    .spinner-dark{border-color:rgba(100,116,139,.3);border-top-color:#64748b;}
+    /* toast */
+    #toast-container{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:.5rem;align-items:center;pointer-events:none;}
+    .toast{background:#1e293b;color:#fff;padding:.6rem 1.2rem;border-radius:.75rem;font-size:.8rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,.25);opacity:0;transform:translateY(.5rem);transition:opacity .25s,transform .25s;pointer-events:none;}
+    .toast.show{opacity:1;transform:translateY(0);}
+    .toast.success{background:#047857;} .toast.error{background:#be123c;}
   </style>
 </head>
-<body class="bg-slate-100 text-slate-900 font-sans min-h-screen flex justify-center items-center p-0 sm:p-4">
+<body class="bg-slate-100 text-slate-900 min-h-screen flex justify-center items-center p-0 sm:p-4" style="font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
 
-  <!-- APP SHELL CONTAINER -->
-  <div class="w-full max-w-lg md:max-w-xl bg-white border border-slate-200 sm:rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-screen sm:min-h-[850px]">
+<!-- TOAST -->
+<div id="toast-container"></div>
 
-    <!-- STATUS BANNER -->
-    <div class="bg-emerald-600 text-white px-4 py-2.5 flex justify-between items-center font-bold">
-      <div class="flex items-center space-x-2 text-xs sm:text-sm">
-        <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse"></span>
-        <span id="txt-status-banner">Everything has reached the centre</span>
-      </div>
-      <span id="txt-signal-badge" class="bg-emerald-800/40 text-emerald-100 text-[11px] px-2.5 py-0.5 rounded-md font-bold">
-        Checking signal...
-      </span>
+<!-- ============================================================ -->
+<!-- PHC SELECTOR OVERLAY                                         -->
+<!-- ============================================================ -->
+<div id="phc-selector-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-50">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+    <div class="text-center space-y-1">
+      <div style="font-size:2rem">🏥</div>
+      <h2 class="text-lg font-extrabold text-slate-900">Select Your PHC</h2>
+      <p class="text-xs text-slate-500">Choose the Primary Health Centre you are logging stock for. Saved on this device.</p>
     </div>
-
-    <!-- VIEW TOGGLE (SUB-CENTRE vs DISTRICT VIEW) -->
-    <div class="p-4 pb-2 bg-slate-50 border-b border-slate-200">
-      <div class="bg-slate-200 p-1 rounded-xl flex text-sm font-semibold">
-        <button id="btn-subcentre" onclick="switchMainView('subcentre')" class="flex-1 py-2 rounded-lg bg-white text-emerald-700 font-bold shadow-sm text-center transition">
-          <span id="txt-btn-subcentre">Sub-centre / PHC</span>
-        </button>
-        <button id="btn-district" onclick="switchMainView('district')" class="flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 text-center transition">
-          <span id="txt-btn-district">District view</span>
-        </button>
-      </div>
+    <div id="phc-loading" class="text-center py-4">
+      <div class="spinner spinner-dark mx-auto mb-2"></div>
+      <p class="text-xs text-slate-500">Loading PHCs…</p>
     </div>
+    <div id="phc-list" class="space-y-2 hidden max-h-72 overflow-y-auto"></div>
+    <p id="phc-load-error" class="hidden text-xs text-rose-600 font-semibold text-center">Could not load PHCs. Check your connection and try again.</p>
+  </div>
+</div>
 
-    <!-- =================================================================== -->
-    <!-- 1. MAIN WORKER INTERFACE (SUB-CENTRE / PHC)                        -->
-    <!-- =================================================================== -->
-    <div id="view-subcentre" class="p-4 space-y-4 flex-1 overflow-y-auto bg-white">
-      
-      <h1 id="txt-headline" class="text-xl font-extrabold text-slate-900 tracking-tight my-1">
-        What do you want to record?
-      </h1>
+<!-- ============================================================ -->
+<!-- APP SHELL                                                     -->
+<!-- ============================================================ -->
+<div class="w-full max-w-lg md:max-w-xl bg-white border border-slate-200 sm:rounded-2xl shadow-xl overflow-hidden flex flex-col min-h-screen sm:min-h-[850px]">
 
-      <!-- ACTION BUTTON: STOCK RECEIVED -->
-      <button onclick="openModal('received')" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white p-4 rounded-2xl flex items-start space-x-3.5 transition text-left shadow-md">
-        <div class="p-1">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
-        <div>
-          <h2 id="txt-action-rcvd-title" class="text-lg font-bold">Stock received</h2>
-          <p id="txt-action-rcvd-desc" class="text-emerald-100 text-xs sm:text-sm font-medium mt-0.5">Supplies & medicines arriving today</p>
-        </div>
+  <!-- STATUS BANNER -->
+  <div class="bg-emerald-600 text-white px-4 py-2.5 flex justify-between items-center font-bold">
+    <div class="flex items-center space-x-2 text-xs sm:text-sm">
+      <span class="w-2.5 h-2.5 bg-white rounded-full animate-pulse" style="width:.625rem;height:.625rem;"></span>
+      <span id="txt-status-banner">Everything has reached the centre</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button id="btn-change-phc" onclick="showPhcSelector()" style="background:rgba(6,78,59,0.4);color:#d1fae5;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;border:none;cursor:pointer;" onmouseover="this.style.background='rgba(6,78,59,0.6)'" onmouseout="this.style.background='rgba(6,78,59,0.4)'">Change PHC</button>
+      <span id="txt-signal-badge" class="bg-emerald-800/40 text-emerald-100 text-[11px] px-2.5 py-0.5 rounded-md font-bold">Checking…</span>
+    </div>
+  </div>
+
+  <!-- PHC NAME BAR -->
+  <div class="bg-emerald-50 border-b border-emerald-200 px-4 py-2 flex items-center space-x-2">
+    <span class="text-emerald-700 text-xs font-bold">📍</span>
+    <span id="txt-phc-name" class="text-emerald-800 text-xs font-bold">Loading…</span>
+    <span id="txt-phc-district" class="text-emerald-600 text-[10px]"></span>
+  </div>
+
+  <!-- VIEW TOGGLE -->
+  <div class="p-4 pb-2 bg-slate-50 border-b border-slate-200">
+    <div class="bg-slate-200 p-1 rounded-xl flex text-sm font-semibold">
+      <button id="btn-subcentre" onclick="switchMainView('subcentre')" class="flex-1 py-2 rounded-xl bg-white text-emerald-700 font-bold shadow-sm text-center transition">
+        <span id="txt-btn-subcentre">Sub-centre / PHC</span>
       </button>
-
-      <!-- ACTION BUTTON: STOCK GIVEN OUT -->
-      <button onclick="openModal('given')" class="w-full bg-slate-50 hover:bg-slate-100 active:scale-[0.99] border border-slate-200 text-slate-800 p-4 rounded-2xl flex items-start space-x-3.5 transition text-left shadow-sm">
-        <div class="p-1 text-slate-600">
-          <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-          </svg>
-        </div>
-        <div>
-          <h2 id="txt-action-given-title" class="text-lg font-bold">Stock given out</h2>
-          <p id="txt-action-given-desc" class="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">Dispensed to patients or sub-centres</p>
-        </div>
+      <button id="btn-district" onclick="switchMainView('district')" class="flex-1 py-2 rounded-xl text-slate-600 hover:text-slate-900 text-center transition">
+        <span id="txt-btn-district">District view</span>
       </button>
-
-      <!-- MEDICINE TRACKING DASHBOARD -->
-      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3.5 shadow-sm">
-        
-        <!-- DASHBOARD HEADER -->
-        <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
-          <div>
-            <h2 id="txt-tracking-title" class="text-base font-bold text-slate-900 tracking-wide">Medicine Stock Monitor</h2>
-            <p id="txt-tracking-subtitle" class="text-xs text-slate-500">Live inventory levels & FEFO tracking</p>
-          </div>
-          <span id="shelf-count-badge" class="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-1 rounded-lg text-xs">
-            0 Items
-          </span>
-        </div>
-
-        <!-- QUICK SUMMARY METRICS BAR -->
-        <div class="grid grid-cols-3 gap-2">
-          <div class="bg-white p-2.5 rounded-xl border border-slate-200 text-center shadow-sm">
-            <span id="metric-total-items" class="text-lg font-bold text-slate-800 block">0</span>
-            <span id="txt-metric-total" class="text-[10px] uppercase font-bold text-slate-500">Total SKUs</span>
-          </div>
-          <div class="bg-white p-2.5 rounded-xl border border-rose-200 text-center shadow-sm">
-            <span id="metric-low-stock" class="text-lg font-bold text-rose-600 block">0</span>
-            <span id="txt-metric-low" class="text-[10px] uppercase font-bold text-rose-600">Low Stock</span>
-          </div>
-          <div class="bg-white p-2.5 rounded-xl border border-purple-200 text-center shadow-sm">
-            <span id="metric-near-exp" class="text-lg font-bold text-purple-600 block">0</span>
-            <span id="txt-metric-near" class="text-[10px] uppercase font-bold text-purple-600">Near Expiry</span>
-          </div>
-        </div>
-
-        <!-- FEFO ALERT BANNER -->
-        <div id="fefo-alert-banner" class="hidden bg-purple-50 border border-purple-200 p-3 rounded-xl flex items-center space-x-3 text-xs text-purple-900">
-          <span class="text-lg">⚠️</span>
-          <div>
-            <strong class="font-semibold block text-purple-900">FEFO Alert (First Expire, First Out)</strong>
-            <span id="fefo-alert-msg">Medicines expiring within 30 days need immediate dispatch.</span>
-          </div>
-        </div>
-
-        <!-- SEARCH INPUT -->
-        <div class="relative">
-          <input type="text" id="med-search-input" oninput="renderMedicineInventory()" placeholder="Search medicine or batch number..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500" />
-        </div>
-
-        <!-- COLOR LEGEND -->
-        <div class="flex flex-wrap gap-2 text-[10px] font-semibold border-t border-slate-200 pt-2">
-          <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="text-rose-600">Critical (&le;10)</span></span>
-          <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-amber-600">Medium (11-50)</span></span>
-          <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-600">In Stock (&gt;50)</span></span>
-          <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span><span class="text-purple-600">Near Expiry</span></span>
-        </div>
-
-        <!-- DYNAMIC MEDICINE LIST -->
-        <div id="medicine-inventory-list" class="space-y-2 pt-1">
-          <!-- Dynamically populated via JS -->
-        </div>
-      </div>
-
-      <!-- ENTRIES LOG ON THIS PHONE -->
-      <div class="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
-        <span id="txt-entries-phone" class="text-sm font-bold">Entries on this phone</span>
-        <span id="entries-count-badge" class="bg-white border border-slate-300 text-slate-700 font-bold px-3 py-1 rounded-lg text-xs">
-          0
-        </span>
-      </div>
-
-      <!-- DYNAMIC LANGUAGE SELECTOR FOOTER -->
-      <div class="pt-3 border-t border-slate-200">
-        <p class="text-[11px] font-semibold text-slate-500 mb-2 text-center">Select Language / भाषा चुनें / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</p>
-        <div class="grid grid-cols-4 gap-2">
-          <button id="lang-en" onclick="setLanguage('en')" class="bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs shadow-sm">English</button>
-          <button id="lang-hi" onclick="setLanguage('hi')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">हिंदी</button>
-          <button id="lang-kn" onclick="setLanguage('kn')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">ಕನ್ನಡ</button>
-          <button id="lang-ta" onclick="setLanguage('ta')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">தமிழ்</button>
-        </div>
-      </div>
-
     </div>
+  </div>
 
-    <!-- =================================================================== -->
-    <!-- 2. DISTRICT VIEW (PIPELINE, MAP & TRANSFERS)                        -->
-    <!-- =================================================================== -->
-    <div id="view-district" class="hidden p-4 space-y-4 flex-1 overflow-y-auto bg-white">
-      
+  <!-- ============================================================ -->
+  <!-- VIEW 1: WORKER / SUB-CENTRE                                  -->
+  <!-- ============================================================ -->
+  <div id="view-subcentre" class="p-4 space-y-4 flex-1 overflow-y-auto bg-white">
+
+    <h1 id="txt-headline" class="text-xl font-extrabold text-slate-900 tracking-tight my-1">What do you want to record?</h1>
+
+    <button onclick="openModal('received')" class="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white p-4 rounded-2xl flex items-start space-x-3 transition text-left shadow-md">
+      <div class="p-1">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+      </div>
       <div>
-        <p id="txt-district-subtitle" class="text-xs font-semibold text-slate-500">District view • block coordinator</p>
-        <h1 id="txt-district-title" class="text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-          Chikkaballapur block, all sub-centres
-        </h1>
+        <h2 id="txt-action-rcvd-title" class="text-lg font-bold">Stock received</h2>
+        <p id="txt-action-rcvd-desc" class="text-emerald-100 text-xs sm:text-sm font-medium mt-0.5">Supplies & medicines arriving today</p>
       </div>
+    </button>
 
-      <!-- DISTRICT SUB-NAVIGATION BUTTONS -->
-      <div class="grid grid-cols-3 gap-2">
-        <button id="tab-btn-pipeline" onclick="switchDistrictTab('pipeline')" class="bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs text-center shadow-sm transition">Pipeline</button>
-        <button id="tab-btn-map" onclick="switchDistrictTab('map')" class="bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition">Map</button>
-        <button id="tab-btn-transfers" onclick="switchDistrictTab('transfers')" class="bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition">Transfers</button>
+    <button onclick="openModal('given')" class="w-full bg-slate-50 hover:bg-slate-100 active:scale-[0.99] border border-slate-200 text-slate-800 p-4 rounded-2xl flex items-start space-x-3 transition text-left shadow-sm">
+      <div class="p-1 text-slate-600">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
       </div>
-
-      <!-- TAB 1: PIPELINE VIEW -->
-      <div id="tab-pipeline" class="space-y-4">
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-200 pb-2">
-            <h2 id="txt-pipeline-sent" class="text-base font-bold text-slate-800">Sent</h2>
-            <span id="sent-count" class="text-xs font-bold text-slate-500">1</span>
-          </div>
-          <div id="sent-cards-container" class="space-y-3">
-            <div id="card-ors" class="bg-white border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm">
-              <div>
-                <h3 class="text-base font-bold text-slate-900">ORS sachets</h3>
-                <p class="text-xs text-emerald-600 font-semibold">Batch: B-2026-99</p>
-                <p class="text-xs text-slate-500 mt-0.5">200 • PHC Chikkaballapur &rarr; Sub-centre Sidlaghatta</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">17 Sep 2026</p>
-              </div>
-              <button onclick="advancePipeline('card-ors', 'in-transit')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition">
-                Mark in transit
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
-          <div class="flex justify-between items-center border-b border-slate-200 pb-2">
-            <h2 id="txt-pipeline-transit" class="text-base font-bold text-slate-800">In transit</h2>
-            <span id="transit-count" class="text-xs font-bold text-slate-500">1</span>
-          </div>
-          <div id="transit-cards-container" class="space-y-3">
-            <div id="card-amoxicillin" class="bg-white border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm">
-              <div>
-                <h3 class="text-base font-bold text-slate-900">Amoxicillin 250mg</h3>
-                <p class="text-xs text-emerald-600 font-semibold">Batch: AMX-4012</p>
-                <p class="text-xs text-slate-500 mt-0.5">200 • District warehouse &rarr; PHC Chikkaballapur</p>
-                <p class="text-[10px] text-slate-400 mt-0.5">16 Sep 2026</p>
-              </div>
-              <button onclick="advancePipeline('card-amoxicillin', 'delivered')" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition">
-                Mark as delivered
-              </button>
-            </div>
-          </div>
-        </div>
+      <div>
+        <h2 id="txt-action-given-title" class="text-lg font-bold">Stock given out</h2>
+        <p id="txt-action-given-desc" class="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">Dispensed to patients or sub-centres</p>
       </div>
+    </button>
 
-      <!-- TAB 2: MAP VIEW -->
-      <div id="tab-map" class="hidden space-y-3">
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
-          <div class="flex justify-between items-center">
-            <h2 id="txt-map-title" class="text-base font-bold text-slate-800">Chikkaballapur Block Map View</h2>
-            <span class="text-[11px] text-emerald-600 font-semibold">● 3 Centres Online</span>
-          </div>
-          <div class="bg-white border border-slate-200 rounded-xl p-4 h-60 relative flex items-center justify-center overflow-hidden">
-            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#059669_1px,transparent_1px)] [background-size:16px_16px]"></div>
-            
-            <button onclick="showMapPinDetails('PHC Chikkaballapur Main', 'Stock Level: Good', 'In Transit: 1 Shipment')" class="absolute top-8 left-8 bg-emerald-600 text-white font-bold text-[11px] px-2 py-1 rounded-lg shadow-sm flex items-center space-x-1">
-              <span>🏥</span><span>PHC Chikkaballapur</span>
-            </button>
-
-            <button onclick="showMapPinDetails('Sub-centre Sidlaghatta', 'Stock Level: Low ORS', 'In Transit: ORS Sachets')" class="absolute bottom-10 left-16 bg-amber-500 text-white font-bold text-[11px] px-2 py-1 rounded-lg shadow-sm flex items-center space-x-1">
-              <span>📍</span><span>SC Sidlaghatta</span>
-            </button>
-
-            <button onclick="showMapPinDetails('Sub-centre Gauribidanur', 'Stock Level: Optimal', 'In Transit: None')" class="absolute top-16 right-6 bg-slate-700 text-white font-bold text-[11px] px-2 py-1 rounded-lg shadow-sm flex items-center space-x-1">
-              <span>📍</span><span>SC Gauribidanur</span>
-            </button>
-          </div>
-          <div id="map-pin-info" class="bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
-            Tap any node on the map to inspect live stock status.
-          </div>
-        </div>
+    <!-- WARD STATUS BUTTON -->
+    <button onclick="openWardModal()" class="w-full bg-blue-50 hover:bg-blue-100 active:scale-[0.99] border border-blue-200 text-slate-800 p-4 rounded-2xl flex items-start space-x-3 transition text-left shadow-sm">
+      <div class="p-1 text-blue-600">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       </div>
-
-      <!-- TAB 3: TRANSFERS VIEW (AUTOMATICALLY RECEIVES SCANNED/ADDED STOCK) -->
-      <div id="tab-transfers" class="hidden space-y-3">
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
-          <div class="flex justify-between items-center">
-            <div>
-              <h2 id="txt-transfers-title" class="text-base font-bold text-slate-800">Stock Transfers Log</h2>
-              <p class="text-[11px] text-slate-500">Includes camera receipt scans & voice entries</p>
-            </div>
-            <button onclick="triggerNewTransfer()" class="bg-emerald-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg hover:bg-emerald-700 transition">+ Transfer</button>
-          </div>
-
-          <!-- DYNAMIC LOG LIST -->
-          <div id="transfers-log-list" class="space-y-2">
-            <!-- Dynamic entries automatically prepended here -->
-            <div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
-              <div>
-                <h4 class="font-bold text-slate-800 text-xs">Amoxicillin 250mg</h4>
-                <p class="text-[11px] text-slate-500">PHC Chikkaballapur &rarr; Sub-centre Sidlaghatta</p>
-                <p class="text-[10px] text-emerald-600 font-mono">Qty: 50 • Batch: AMX-4012</p>
-              </div>
-              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">Completed</span>
-            </div>
-          </div>
-        </div>
+      <div class="flex-1">
+        <h2 class="text-lg font-bold">Ward Bed Status</h2>
+        <p class="text-slate-500 text-xs sm:text-sm font-medium mt-0.5">Update bed occupancy across wards</p>
       </div>
+      <div id="bed-summary-pill" class="self-center bg-blue-100 text-blue-800 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded-lg" style="white-space:nowrap;">—</div>
+    </button>
 
-    </div>
-
-  </div>
-
-  <!-- =================================================================== -->
-  <!-- MODAL: ADD MEDICINE ENTRY WITH CAMERA AND RECORDING                -->
-  <!-- =================================================================== -->
-  <div id="entry-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
-    <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 text-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
-      
-      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-        <h2 id="modal-title" class="text-lg font-bold">Add Medicine Entry</h2>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
-      </div>
-
-      <!-- MEDICINE NAME & CUSTOM INPUT -->
-      <div class="space-y-1">
-        <label id="lbl-med-name" class="text-[11px] font-bold text-slate-500 uppercase">Medicine Name</label>
-        <input type="text" id="entry-item" value="ORS sachets" placeholder="e.g. Paracetamol 500mg" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-semibold" />
-      </div>
-
-      <!-- BATCH & EXPIRY TRACKING -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="space-y-1">
-          <label id="lbl-batch-num" class="text-[11px] font-bold text-slate-500 uppercase">Batch Number</label>
-          <input type="text" id="entry-batch" value="B-2026-X1" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-mono" />
-        </div>
-        <div class="space-y-1">
-          <label id="lbl-expiry-date" class="text-[11px] font-bold text-slate-500 uppercase">Expiry Date</label>
-          <input type="date" id="entry-expiry" value="2026-10-31" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500" />
-        </div>
-      </div>
-
-      <!-- QUANTITY INPUT -->
-      <div class="space-y-1">
-        <label id="lbl-qty" class="text-[11px] font-bold text-slate-500 uppercase">Quantity (Units)</label>
-        <input type="number" id="entry-qty" value="15" min="1" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-bold" />
-      </div>
-
-      <!-- CAMERA & AUDIO UI SECTION -->
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
-        <label id="lbl-media" class="text-[11px] font-bold text-slate-500 uppercase block">Verification Media (Receipt / Voice)</label>
-        
-        <div class="grid grid-cols-2 gap-2">
-          <!-- CAMERA BUTTON -->
-          <label class="bg-white hover:bg-slate-100 border border-slate-300 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition shadow-sm">
-            <svg class="w-5 h-5 text-emerald-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span id="txt-take-photo" class="text-[11px] font-semibold text-slate-700">Take Photo</span>
-            <input type="file" accept="image/*" capture="camera" onchange="handlePhotoCapture(event)" class="hidden" />
-          </label>
-
-          <!-- AUDIO RECORD BUTTON -->
-          <button id="record-btn" type="button" onclick="toggleAudioRecording()" class="bg-white hover:bg-slate-100 border border-slate-300 rounded-xl p-3 flex flex-col items-center justify-center transition shadow-sm">
-            <svg id="record-icon" class="w-5 h-5 text-emerald-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-            <span id="record-label" class="text-[11px] font-semibold text-slate-700">Voice Note</span>
-          </button>
-        </div>
-
-        <div id="photo-preview-box" class="hidden flex items-center space-x-3 bg-white p-2 rounded-lg border border-slate-200">
-          <img id="photo-img" class="h-10 w-10 object-cover rounded border border-emerald-500" />
-          <span class="text-xs text-emerald-700 font-medium">✓ Photo Attached</span>
-        </div>
-
-        <div id="audio-preview-box" class="hidden">
-          <audio id="audio-player" controls class="w-full h-8 rounded"></audio>
-        </div>
-      </div>
-
-      <!-- SUBMIT BUTTON -->
-      <button id="btn-save-inventory" onclick="saveMedicineToInventory()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm">
-        Add Medicine To Inventory
-      </button>
-
-    </div>
-  </div>
-
-  <script>
-    // --- TRANSLATIONS ---
-    const translations = {
-      en: {
-        banner: "Everything has reached the centre",
-        noSignal: "No signal",
-        subcentreBtn: "Sub-centre / PHC",
-        districtBtn: "District view",
-        headline: "What do you want to record?",
-        rcvdTitle: "Stock received",
-        rcvdDesc: "Supplies & medicines arriving today",
-        givenTitle: "Stock given out",
-        givenDesc: "Dispensed to patients or sub-centres",
-        trackTitle: "Medicine Stock Monitor",
-        trackSubtitle: "Live inventory levels & FEFO tracking",
-        metricTotal: "Total SKUs",
-        metricLow: "Low Stock",
-        metricNear: "Near Expiry",
-        entriesPhone: "Entries on this phone",
-        addMedBtn: "Add Medicine To Inventory",
-        lblMedName: "Medicine Name",
-        lblBatchNum: "Batch Number",
-        lblExpiryDate: "Expiry Date",
-        lblQty: "Quantity (Units)",
-        lblMedia: "Verification Media (Receipt / Voice)",
-        takePhoto: "Take Photo",
-        voiceNote: "Voice Note",
-        districtTitle: "Chikkaballapur block, all sub-centres",
-        districtSubtitle: "District view • block coordinator",
-        pipelineSent: "Sent",
-        pipelineTransit: "In transit",
-        mapTitle: "Chikkaballapur Block Map View",
-        transfersTitle: "Stock Transfers Log"
-      },
-      hi: {
-        banner: "सब कुछ केंद्र पर पहुंच चुका है",
-        noSignal: "सिग्नल नहीं है",
-        subcentreBtn: "उप-केंद्र / पीएचसी",
-        districtBtn: "जिला दृश्य",
-        headline: "आप क्या दर्ज करना चाहते हैं?",
-        rcvdTitle: "स्टॉक प्राप्त हुआ",
-        rcvdDesc: "आज आने वाली दवाइयां और आपूर्ति",
-        givenTitle: "स्टॉक दिया गया",
-        givenDesc: "मरीजों या उप-केंद्रों को दी गई दवाएं",
-        trackTitle: "दवा स्टॉक मॉनिटर",
-        trackSubtitle: "लाइव स्टॉक स्तर और एफईएफओ ट्रैकिंग",
-        metricTotal: "कुल दवाएं",
-        metricLow: "कम स्टॉक",
-        metricNear: "जल्द एक्सपायर",
-        entriesPhone: "इस फोन पर दर्ज प्रविष्टियां",
-        addMedBtn: "इन्वेंट्री में दवा जोड़ें",
-        lblMedName: "दवा का नाम",
-        lblBatchNum: "बैच नंबर",
-        lblExpiryDate: "एक्सपायरी तिथि",
-        lblQty: "मात्रा (इकाइयां)",
-        lblMedia: "सत्यापन मीडिया (रसीद / आवाज)",
-        takePhoto: "फोटो लें",
-        voiceNote: "वॉइस नोट",
-        districtTitle: "चिक्काबल्लापुर ब्लॉक, सभी उप-केंद्र",
-        districtSubtitle: "जिला दृश्य • ब्लॉक समन्वयक",
-        pipelineSent: "भेजा गया",
-        pipelineTransit: "मार्ग में है",
-        mapTitle: "चिक्काबल्लापुर ब्लॉक नक्शा दृश्य",
-        transfersTitle: "स्टॉक स्थानांतरण लॉग"
-      },
-      kn: {
-        banner: "ಎಲ್ಲವೂ ಕೇಂದ್ರವನ್ನು ತಲುಪಿದೆ",
-        noSignal: "ಸಿಗ್ನಲ್ ಇಲ್ಲ",
-        subcentreBtn: "ಉಪ-ಕೇಂದ್ರ / PHC",
-        districtBtn: "ಜಿಲ್ಲಾ ನೋಟ",
-        headline: "ನೀವು ಏನನ್ನು ದಾಖಲಿಸಲು ಬಯಸುತ್ತೀರಿ?",
-        rcvdTitle: "ಸ್ಟಾಕ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ",
-        rcvdDesc: "ಇಂದು ತಲುಪುವ ಔಷಧಗಳು ಮತ್ತು ಸರಬರಾಜುಗಳು",
-        givenTitle: "ಸ್ಟಾಕ್ ನೀಡಲಾಗಿದೆ",
-        givenDesc: "ರೋಗಿಗಳಿಗೆ ಅಥವಾ ಉಪ-ಕೇಂದ್ರಗಳಿಗೆ ನೀಡಲಾಗಿದೆ",
-        trackTitle: "ಔಷಧ ಸ್ಟಾಕ್ ಮಾನಿಟರ್",
-        trackSubtitle: "ಲೈವ್ ದಾಸ್ತಾನು ಮಟ್ಟಗಳು ಮತ್ತು FEFO ಟ್ರ್ಯಾಕಿಂಗ್",
-        metricTotal: "ಒಟ್ಟು ಔಷಧಗಳು",
-        metricLow: "ಕಡಿಮೆ ಸ್ಟಾಕ್",
-        metricNear: "ಬೇಗನೆ ಎಕ್ಸ್ ಪೈರಿ",
-        entriesPhone: "ಈ ಫೋನ್‌ನಲ್ಲಿರುವ ನಮೂದುಗಳು",
-        addMedBtn: "ದಾಸ್ತಾನಿಗೆ ಔಷಧವನ್ನು ಸೇರಿಸಿ",
-        lblMedName: "ಔಷಧದ ಹೆಸರು",
-        lblBatchNum: "ಬ್ಯಾಚ್ ಸಂಖ್ಯೆ",
-        lblExpiryDate: "ಅಂತ್ಯದ ದಿನಾಂಕ (Expiry)",
-        lblQty: "ಪ್ರಮಾಣ (ಯೂನಿಟ್‌ಗಳು)",
-        lblMedia: "ಪರಿಶೀಲನೆ ಮಾಧ್ಯಮ (ರಸೀದಿ / ಧ್ವನಿ)",
-        takePhoto: "ಫೋಟೋ ತೆಗೆಯಿರಿ",
-        voiceNote: "ವಾಯ್ಸ್ ನೋಟ್",
-        districtTitle: "ಚಿಕ್ಕಬಳ್ಳಾಪುರ ಬ್ಲಾಕ್, ಎಲ್ಲಾ ಉಪಕೇಂದ್ರಗಳು",
-        districtSubtitle: "ಜಿಲ್ಲಾ ನೋಟ • ಬ್ಲಾಕ್ ಸಂಯೋಜಕರು",
-        pipelineSent: "ಕಳುಹಿಸಲಾಗಿದೆ",
-        pipelineTransit: "ದಾರಿಯಲ್ಲಿದೆ (In Transit)",
-        mapTitle: "ಚಿಕ್ಕಬಳ್ಳಾಪುರ ಬ್ಲಾಕ್ ನಕ್ಷೆ ನೋಟ",
-        transfersTitle: "ಸ್ಟಾಕ್ ವರ್ಗಾವಣೆ ಲಾಗ್"
-      },
-      ta: {
-        banner: "அனைத்தும் மையத்தை அடைந்துவிட்டன",
-        noSignal: "சிக்னல் இல்லை",
-        subcentreBtn: "துணை மையம் / PHC",
-        districtBtn: "மாவட்ட பார்வை",
-        headline: "நீங்கள் எைப் பதிவு செய்ய விரும்புகிறீர்கள்?",
-        rcvdTitle: "சரக்கு பெறப்பட்டது",
-        rcvdDesc: "இன்று வரும் மருந்துகள் மற்றும் பொருட்கள்",
-        givenTitle: "சரக்கு வழங்கப்பட்டது",
-        givenDesc: "நோயாளி அல்லது துணை மையங்களுக்கு வழங்கப்பட்டது",
-        trackTitle: "மருந்து இருப்பு கண்காணிப்பு",
-        trackSubtitle: "நேரலை இருப்பு நிலை & FEFO கண்காணிப்பு",
-        metricTotal: "மொத்த மருந்துகள்",
-        metricLow: "குறைந்த இருப்பு",
-        metricNear: "விரைவில் காலாவதி",
-        entriesPhone: "இந்த போனில் பதிவு செய்யப்பட்டவை",
-        addMedBtn: "இருப்பில் மருந்தைச் சேர்க்கவும்",
-        lblMedName: "மருந்தின் பெயர்",
-        lblBatchNum: "பேட்ச் எண்",
-        lblExpiryDate: "காலாவதி தேதி",
-        lblQty: "அளவு (அலகுகள்)",
-        lblMedia: "சரிபார்ப்பு ஊடகம் (ரசீது / குரல்)",
-        takePhoto: "படம் எடுக்கவும்",
-        voiceNote: "குரல் பதிவு",
-        districtTitle: "சிக்கபல்லாபூர் பிளாக், அனைத்து துணை மையங்கள்",
-        districtSubtitle: "மாவட்ட பார்வை • பிளாக் ஒருங்கிணைப்பாளர்",
-        pipelineSent: "அனுப்பப்பட்டது",
-        pipelineTransit: "வழியில் உள்ளது",
-        mapTitle: "சிக்கபல்லாபூர் பிளாக் வரைபடப் பார்வை",
-        transfersTitle: "பரிமாற்றப் பதிவு"
-      }
-    };
-
-    let currentLang = 'en';
-    let photoAttached = false;
-    let audioAttached = false;
-
-    // --- REAL-TIME SIGNAL STATUS MONITORING ---
-    function updateOnlineStatus() {
-      const badge = document.getElementById('txt-signal-badge');
-      if (!badge) return;
-
-      if (navigator.onLine) {
-        badge.innerText = "Online";
-        badge.className = "bg-emerald-500/80 text-white text-[11px] px-2.5 py-0.5 rounded-md font-bold";
-      } else {
-        badge.innerText = translations[currentLang]?.noSignal || "No signal";
-        badge.className = "bg-emerald-800/40 text-emerald-100 text-[11px] px-2.5 py-0.5 rounded-md font-bold";
-      }
-    }
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    function setLanguage(lang) {
-      currentLang = lang;
-      const t = translations[lang];
-
-      document.getElementById('txt-status-banner').innerText = t.banner;
-      updateOnlineStatus();
-      document.getElementById('txt-btn-subcentre').innerText = t.subcentreBtn;
-      document.getElementById('txt-btn-district').innerText = t.districtBtn;
-      document.getElementById('txt-headline').innerText = t.headline;
-      document.getElementById('txt-action-rcvd-title').innerText = t.rcvdTitle;
-      document.getElementById('txt-action-rcvd-desc').innerText = t.rcvdDesc;
-      document.getElementById('txt-action-given-title').innerText = t.givenTitle;
-      document.getElementById('txt-action-given-desc').innerText = t.givenDesc;
-      document.getElementById('txt-tracking-title').innerText = t.trackTitle;
-      document.getElementById('txt-tracking-subtitle').innerText = t.trackSubtitle;
-      document.getElementById('txt-metric-total').innerText = t.metricTotal;
-      document.getElementById('txt-metric-low').innerText = t.metricLow;
-      document.getElementById('txt-metric-near').innerText = t.metricNear;
-      document.getElementById('txt-entries-phone').innerText = t.entriesPhone;
-      document.getElementById('btn-save-inventory').innerText = t.addMedBtn;
-      document.getElementById('lbl-med-name').innerText = t.lblMedName;
-      document.getElementById('lbl-batch-num').innerText = t.lblBatchNum;
-      document.getElementById('lbl-expiry-date').innerText = t.lblExpiryDate;
-      document.getElementById('lbl-qty').innerText = t.lblQty;
-      document.getElementById('lbl-media').innerText = t.lblMedia;
-      document.getElementById('txt-take-photo').innerText = t.takePhoto;
-      document.getElementById('record-label').innerText = t.voiceNote;
-      document.getElementById('txt-district-title').innerText = t.districtTitle;
-      document.getElementById('txt-district-subtitle').innerText = t.districtSubtitle;
-      document.getElementById('txt-pipeline-sent').innerText = t.pipelineSent;
-      document.getElementById('txt-pipeline-transit').innerText = t.pipelineTransit;
-      document.getElementById('txt-map-title').innerText = t.mapTitle;
-      document.getElementById('txt-transfers-title').innerText = t.transfersTitle;
-
-      ['en', 'hi', 'kn', 'ta'].forEach(l => {
-        const btn = document.getElementById(`lang-${l}`);
-        if (l === lang) {
-          btn.className = "bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs shadow-sm";
-        } else {
-          btn.className = "bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50";
-        }
-      });
-    }
-
-    // --- MEDICINE INVENTORY DATA ---
-    let localInventory = [
-      { id: 1, name: "ORS sachets", batch: "ORS-9982", expiry: "2027-04-20", quantity: 8, maxStock: 100 },
-      { id: 2, name: "Amoxicillin 250mg", batch: "AMX-4012", expiry: "2026-10-15", quantity: 35, maxStock: 100 },
-      { id: 3, name: "Paracetamol 500mg", batch: "PCM-1020", expiry: "2027-12-30", quantity: 120, maxStock: 200 }
-    ];
-
-    let currentActionType = 'received';
-    let entryCounter = 0;
-
-    updateOnlineStatus();
-    renderMedicineInventory();
-
-    // --- MAIN VIEW TOGGLE ---
-    function switchMainView(viewName) {
-      const subBtn = document.getElementById('btn-subcentre');
-      const distBtn = document.getElementById('btn-district');
-      const subView = document.getElementById('view-subcentre');
-      const distView = document.getElementById('view-district');
-
-      if (viewName === 'subcentre') {
-        subBtn.className = "flex-1 py-2 rounded-lg bg-white text-emerald-700 font-bold shadow-sm text-center transition";
-        distBtn.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 text-center transition";
-        subView.classList.remove('hidden');
-        distView.classList.add('hidden');
-      } else {
-        distBtn.className = "flex-1 py-2 rounded-lg bg-white text-emerald-700 font-bold shadow-sm text-center transition";
-        subBtn.className = "flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 text-center transition";
-        distView.classList.remove('hidden');
-        subView.classList.add('hidden');
-      }
-    }
-
-    // --- DISTRICT SUB-TABS ---
-    function switchDistrictTab(tabName) {
-      const tabs = ['pipeline', 'map', 'transfers'];
-      tabs.forEach(tab => {
-        const btn = document.getElementById(`tab-btn-${tab}`);
-        const content = document.getElementById(`tab-${tab}`);
-        
-        if (tab === tabName) {
-          btn.className = "bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs text-center shadow-sm transition";
-          content.classList.remove('hidden');
-        } else {
-          btn.className = "bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition";
-          content.classList.add('hidden');
-        }
-      });
-    }
-
-    function showMapPinDetails(title, stock, transit) {
-      document.getElementById('map-pin-info').innerHTML = `
-        <strong class="text-slate-900 text-xs block">${title}</strong>
-        <span class="text-emerald-700 font-semibold">${stock}</span> • <span>${transit}</span>
-      `;
-    }
-
-    function triggerNewTransfer() {
-      addTransferLogEntry("Zinc Dispersible", "ZN-8840", 100, "District Warehouse → PHC Chikkaballapur", false, false);
-    }
-
-    // --- ADD ENTRY TO TRANSFERS LOG ---
-    function addTransferLogEntry(itemName, batch, qty, route, photoAttached, audioAttached) {
-      const logContainer = document.getElementById('transfers-log-list');
-      const newItem = document.createElement('div');
-      newItem.className = "bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm";
-      
-      let mediaBadges = "";
-      if (photoAttached) mediaBadges += `<span class="bg-blue-50 text-blue-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-blue-200 mr-1">📷 Photo</span>`;
-      if (audioAttached) mediaBadges += `<span class="bg-purple-50 text-purple-700 text-[9px] px-1.5 py-0.5 rounded font-bold border border-purple-200">🎙️ Voice</span>`;
-
-      newItem.innerHTML = `
+    <section class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm" aria-labelledby="attendance-title">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
         <div>
-          <div class="flex items-center space-x-1.5">
-            <h4 class="font-bold text-slate-900 text-xs">${itemName}</h4>
-            ${mediaBadges}
-          </div>
-          <p class="text-[11px] text-slate-500">${route}</p>
-          <p class="text-[10px] text-emerald-700 font-mono font-semibold">Qty: ${qty} • Batch: ${batch}</p>
+          <h2 id="attendance-title" class="text-base font-bold text-slate-900">Today's Staff Attendance</h2>
+          <p id="attendance-date" class="text-xs text-slate-500">Loading roster…</p>
         </div>
-        <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">Logged</span>
-      `;
-      logContainer.prepend(newItem);
+        <span id="attendance-count" class="bg-white border border-slate-300 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs">—</span>
+      </div>
+      <div id="attendance-loading" class="hidden text-center py-3">
+        <div class="spinner spinner-dark mx-auto mb-1"></div>
+        <p class="text-xs text-slate-500">Loading attendance…</p>
+      </div>
+      <div id="attendance-list" class="space-y-2"></div>
+    </section>
+
+    <!-- MEDICINE TRACKING DASHBOARD -->
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-2.5">
+        <div>
+          <h2 id="txt-tracking-title" class="text-base font-bold text-slate-900">Medicine Stock Monitor</h2>
+          <p id="txt-tracking-subtitle" class="text-xs text-slate-500">Live inventory levels &amp; FEFO tracking</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="refreshInventory()" title="Refresh" class="text-emerald-700 hover:text-emerald-800 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+          <span id="shelf-count-badge" class="bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold px-2.5 py-1 rounded-lg text-xs">0 Items</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 text-center shadow-sm">
+          <span id="metric-total-items" class="text-lg font-bold text-slate-800" style="display:block">0</span>
+          <span id="txt-metric-total" class="text-[10px] uppercase font-bold text-slate-500">Total SKUs</span>
+        </div>
+        <div class="bg-white p-2.5 rounded-xl border border-rose-200 text-center shadow-sm">
+          <span id="metric-low-stock" class="text-lg font-bold text-rose-600" style="display:block">0</span>
+          <span id="txt-metric-low" class="text-[10px] uppercase font-bold text-rose-600">Low Stock</span>
+        </div>
+        <div class="bg-white p-2.5 rounded-xl border border-purple-200 text-center shadow-sm">
+          <span id="metric-near-exp" class="text-lg font-bold text-purple-600" style="display:block">0</span>
+          <span id="txt-metric-near" class="text-[10px] uppercase font-bold text-purple-600">Near Expiry</span>
+        </div>
+      </div>
+
+      <div id="fefo-alert-banner" class="hidden bg-purple-50 border border-purple-200 p-3 rounded-xl flex items-center space-x-3 text-xs text-purple-900">
+        <span style="font-size:1.2rem">⚠️</span>
+        <div>
+          <strong class="font-semibold" style="display:block">FEFO Alert (First Expire, First Out)</strong>
+          <span id="fefo-alert-msg">Medicines expiring within 30 days need immediate dispatch.</span>
+        </div>
+      </div>
+
+      <input type="text" id="med-search-input" oninput="renderMedicineInventory()" placeholder="Search medicine or batch number…"
+        class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1"/>
+
+      <div class="flex flex-wrap gap-2 text-[10px] font-semibold border-t border-slate-200 pt-2">
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="text-rose-600">Critical (≤10)</span></span>
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span class="text-amber-600">Medium (11–50)</span></span>
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-600">In Stock (&gt;50)</span></span>
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-purple-500"></span><span class="text-purple-600">Near Expiry</span></span>
+      </div>
+
+      <div id="inventory-loading" class="hidden text-center py-4">
+        <div class="spinner spinner-dark mx-auto mb-1"></div>
+        <p class="text-xs text-slate-500">Loading inventory…</p>
+      </div>
+      <div id="medicine-inventory-list" class="space-y-2 pt-1"></div>
+    </div>
+
+    <!-- ENTRY COUNTER -->
+    <div class="bg-slate-50 border border-slate-200 text-slate-800 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+      <span id="txt-entries-phone" class="text-sm font-bold">Entries this session</span>
+      <span id="entries-count-badge" class="bg-white border border-slate-300 text-slate-700 font-bold px-3 py-1 rounded-lg text-xs">0</span>
+    </div>
+
+    <!-- LANGUAGE SELECTOR -->
+    <div class="pt-3 border-t border-slate-200">
+      <p class="text-[11px] font-semibold text-slate-500 mb-2 text-center">Select Language / भाषा चुनें / ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ</p>
+      <div class="grid grid-cols-4 gap-2">
+        <button id="lang-en" onclick="setLanguage('en')" class="bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs shadow-sm">English</button>
+        <button id="lang-hi" onclick="setLanguage('hi')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">हिंदी</button>
+        <button id="lang-kn" onclick="setLanguage('kn')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">ಕನ್ನಡ</button>
+        <button id="lang-ta" onclick="setLanguage('ta')" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50">தமிழ்</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- VIEW 2: DISTRICT                                             -->
+  <!-- ============================================================ -->
+  <div id="view-district" class="hidden p-4 space-y-4 flex-1 overflow-y-auto bg-white">
+    <div>
+      <p id="txt-district-subtitle" class="text-xs font-semibold text-slate-500">District view • block coordinator</p>
+      <h1 id="txt-district-title" class="text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">Chikkaballapur block, all sub-centres</h1>
+      <label for="district-view-select" class="block text-[11px] font-bold text-slate-500 mt-3 mb-1">District network</label>
+      <select id="district-view-select" onchange="updateDistrictView()"
+        class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-800 focus:outline-none focus:border-emerald-500">
+        <option value="">Loading districts…</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-3 gap-2">
+      <button id="tab-btn-pipeline"  onclick="switchDistrictTab('pipeline')"  class="bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs text-center shadow-sm transition">Pipeline</button>
+      <button id="tab-btn-map"       onclick="switchDistrictTab('map')"       class="bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition">Map</button>
+      <button id="tab-btn-transfers" onclick="switchDistrictTab('transfers')" class="bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition">Transfers</button>
+    </div>
+
+    <!-- TAB: PIPELINE -->
+    <div id="tab-pipeline" class="space-y-4">
+      <div id="pipeline-loading" class="hidden text-center py-4">
+        <div class="spinner spinner-dark mx-auto mb-1"></div>
+        <p class="text-xs text-slate-500">Loading orders…</p>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+          <h2 id="txt-pipeline-sent" class="text-base font-bold text-slate-800">Requisition Sent</h2>
+          <span id="sent-count" class="text-xs font-bold text-slate-500">0</span>
+        </div>
+        <div id="sent-cards-container" class="space-y-3">
+          <p class="text-xs text-slate-400 text-center py-2">No orders yet.</p>
+        </div>
+      </div>
+      <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl space-y-3">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+          <h2 id="txt-pipeline-transit" class="text-base font-bold text-slate-800">In Transit</h2>
+          <span id="transit-count" class="text-xs font-bold text-slate-500">0</span>
+        </div>
+        <div id="transit-cards-container" class="space-y-3">
+          <p class="text-xs text-slate-400 text-center py-2">No orders yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: MAP -->
+    <div id="tab-map" class="hidden space-y-3">
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div class="flex justify-between items-center">
+          <h2 id="txt-map-title" class="text-base font-bold text-slate-800">Chikkaballapur Block Map View</h2>
+          <span id="map-online-count" class="text-[11px] text-emerald-600 font-semibold">● Online</span>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl h-60 relative overflow-hidden" id="map-container">
+          <div class="absolute inset-0 opacity-20" style="background:radial-gradient(#059669 1px,transparent 1px);background-size:16px 16px;"></div>
+          <div id="map-pins-container" class="absolute inset-0"></div>
+        </div>
+        <div id="map-pin-info" class="bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-600 shadow-sm">
+          Tap any node on the map to inspect live stock status.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: TRANSFERS -->
+    <div id="tab-transfers" class="hidden space-y-3">
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 shadow-sm">
+        <div>
+          <h2 id="txt-transfers-title" class="text-base font-bold text-slate-800">Stock Transfers Log</h2>
+          <p class="text-[11px] text-slate-500">Recent inter-PHC transfers and vendor orders</p>
+        </div>
+        <div id="transfers-loading" class="hidden text-center py-4">
+          <div class="spinner spinner-dark mx-auto mb-1"></div>
+          <p class="text-xs text-slate-500">Loading transfers…</p>
+        </div>
+        <div id="transfers-log-list" class="space-y-2">
+          <p class="text-xs text-slate-400 text-center py-2">No transfers yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: ADD MEDICINE ENTRY                                    -->
+<!-- ============================================================ -->
+<div id="entry-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md p-5 space-y-4 text-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+      <h2 id="modal-title" class="text-lg font-bold">Add Medicine Entry</h2>
+      <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+    </div>
+
+    <!-- AI status bar -->
+    <div id="ai-status-bar" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center space-x-2 text-xs text-emerald-800">
+      <div class="spinner" style="border-color:rgba(5,150,105,.3);border-top-color:#059669;"></div>
+      <span id="ai-status-text">Processing with Gemini AI…</span>
+    </div>
+
+    <div class="space-y-1">
+      <label id="lbl-med-name" class="text-[11px] font-bold text-slate-500 uppercase">Medicine Name</label>
+      <input type="text" id="entry-item" placeholder="e.g. Paracetamol 500mg"
+        class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-semibold"/>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+      <div class="space-y-1">
+        <label id="lbl-batch-num" class="text-[11px] font-bold text-slate-500 uppercase">Batch Number</label>
+        <input type="text" id="entry-batch" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-mono"/>
+      </div>
+      <div class="space-y-1">
+        <label id="lbl-expiry-date" class="text-[11px] font-bold text-slate-500 uppercase">Expiry Date</label>
+        <input type="date" id="entry-expiry" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500"/>
+      </div>
+    </div>
+    <div class="space-y-1">
+      <label id="lbl-qty" class="text-[11px] font-bold text-slate-500 uppercase">Quantity (Units)</label>
+      <input type="number" id="entry-qty" value="1" min="1"
+        class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500 font-bold"/>
+    </div>
+
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-3">
+      <label id="lbl-media" class="text-[11px] font-bold text-slate-500 uppercase" style="display:block">Verification Media (Receipt / Voice)</label>
+      <div class="grid grid-cols-2 gap-2">
+        <label class="bg-white hover:bg-slate-100 border border-slate-300 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition shadow-sm">
+          <svg class="w-5 h-5 text-emerald-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span id="txt-take-photo" class="text-[11px] font-semibold text-slate-700">Take Photo</span>
+          <input type="file" accept="image/*" capture="camera" onchange="handlePhotoCapture(event)" class="hidden"/>
+        </label>
+        <button id="record-btn" type="button" onclick="toggleAudioRecording()" class="bg-white hover:bg-slate-100 border border-slate-300 rounded-xl p-3 flex flex-col items-center justify-center transition shadow-sm">
+          <svg id="record-icon" class="w-5 h-5 text-emerald-600 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>
+          <span id="record-label" class="text-[11px] font-semibold text-slate-700">Voice Note</span>
+        </button>
+      </div>
+      <div id="photo-preview-box" class="hidden flex items-center space-x-3 bg-white p-2 rounded-lg border border-slate-200">
+        <img id="photo-img" class="h-10 w-10 object-cover rounded border border-emerald-500"/>
+        <span class="text-xs text-emerald-700 font-medium">✓ Photo Attached</span>
+      </div>
+      <div id="audio-preview-box" class="hidden">
+        <audio id="audio-player" controls class="w-full h-8 rounded"></audio>
+      </div>
+    </div>
+
+    <button id="btn-save-inventory" onclick="saveMedicineToInventory()"
+      class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-md transition text-sm flex items-center justify-center space-x-2">
+      <span id="btn-save-text">Add Medicine To Inventory</span>
+      <span id="btn-save-spinner" class="hidden spinner"></span>
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- WARD BED MODAL                                              -->
+<!-- ============================================================ -->
+<div id="ward-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl flex flex-col" style="max-height:90vh;">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center border-b border-slate-200 p-5 pb-3">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">Ward Bed Status</h2>
+        <p id="ward-modal-phc-name" class="text-xs text-slate-500 mt-0.5"></p>
+      </div>
+      <button onclick="closeWardModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
+    </div>
+
+    <!-- Summary bar -->
+    <div id="ward-summary-bar" class="px-5 py-3 bg-slate-50 border-b border-slate-200 grid grid-cols-3 gap-2 text-center">
+      <div>
+        <span id="ward-total" class="text-lg font-bold text-slate-800" style="display:block">—</span>
+        <span class="text-[10px] uppercase font-bold text-slate-500">Total</span>
+      </div>
+      <div>
+        <span id="ward-occupied" class="text-lg font-bold text-rose-600" style="display:block">—</span>
+        <span class="text-[10px] uppercase font-bold text-rose-600">Occupied</span>
+      </div>
+      <div>
+        <span id="ward-available" class="text-lg font-bold text-emerald-600" style="display:block">—</span>
+        <span class="text-[10px] uppercase font-bold text-emerald-600">Available</span>
+      </div>
+    </div>
+
+    <!-- Ward tabs -->
+    <div class="px-5 pt-3 pb-0 flex space-x-2">
+      <button id="ward-tab-general"   onclick="switchWardTab('general')"   class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition">General</button>
+      <button id="ward-tab-maternity" onclick="switchWardTab('maternity')" class="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 transition">Maternity</button>
+      <button id="ward-tab-emergency" onclick="switchWardTab('emergency')" class="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 transition">Emergency</button>
+    </div>
+
+    <!-- Bed grid -->
+    <div class="overflow-y-auto flex-1 p-5">
+      <div id="ward-loading" class="text-center py-8">
+        <div class="spinner spinner-dark mx-auto mb-2"></div>
+        <p class="text-xs text-slate-500">Loading ward data…</p>
+      </div>
+      <div id="bed-grid" class="grid gap-3" style="display:none;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="px-5 pb-4 pt-2 border-t border-slate-200 flex items-center space-x-4 text-[10px] font-semibold text-slate-500">
+      <span class="flex items-center space-x-1"><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:#ecfdf5;border:1px solid #6ee7b7;"></span><span>Available</span></span>
+      <span class="flex items-center space-x-1"><span style="display:inline-block;width:12px;height:12px;border-radius:4px;background:#fef2f2;border:1px solid #fca5a5;"></span><span>Occupied</span></span>
+      <span class="text-slate-400 flex-1 text-right">Tap a bed to toggle</span>
+    </div>
+  </div>
+</div>
+
+<!-- Patient label prompt modal -->
+<div id="patient-label-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden justify-center items-center p-4 z-50" style="z-index:60;">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-xs p-5 space-y-4 shadow-2xl">
+    <h3 class="text-base font-bold text-slate-900">Patient Info (optional)</h3>
+    <p class="text-xs text-slate-500">Add a short label for this bed (e.g. "Female, 28"). Leave blank to skip.</p>
+    <input type="text" id="patient-label-input" maxlength="60" placeholder="e.g. Male, 34"
+      class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:border-emerald-500"/>
+    <div class="grid grid-cols-2 gap-2">
+      <button onclick="confirmPatientLabel(false)" class="py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition">Skip</button>
+      <button onclick="confirmPatientLabel(true)"  class="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// WARD / BED STATE
+// ============================================================
+let wardData         = null;   // full PhcBedSummary from API
+let activeWardTab    = "general";
+let pendingBedToggle = null;   // { bedId, newOccupied } waiting for patient label
+
+// ============================================================
+// OPEN / CLOSE WARD MODAL
+// ============================================================
+function openWardModal() {
+  if (!currentPhcId) { showToast("Select a PHC first", "error"); return; }
+  document.getElementById("ward-modal-phc-name").textContent = currentPhcName;
+  document.getElementById("ward-modal").classList.remove("hidden");
+  document.getElementById("ward-modal").classList.add("flex");
+  activeWardTab = "general";
+  loadWardData();
+}
+
+function closeWardModal() {
+  document.getElementById("ward-modal").classList.add("hidden");
+  document.getElementById("ward-modal").classList.remove("flex");
+  wardData = null;
+}
+
+// ============================================================
+// LOAD WARD DATA
+// ============================================================
+async function loadWardData() {
+  document.getElementById("ward-loading").style.display = "block";
+  document.getElementById("bed-grid").style.display     = "none";
+  try {
+    const res = await fetch(API_BASE + "/beds/" + currentPhcId);
+    if (!res.ok) throw new Error(res.status);
+    wardData = await res.json();
+    updateWardSummaryBar();
+    renderBedGrid(activeWardTab);
+    updateBedSummaryPill();
+  } catch {
+    document.getElementById("ward-loading").innerHTML =
+      '<p class="text-xs text-rose-600 text-center">Could not load ward data. Check connection.</p>';
+  }
+}
+
+// ============================================================
+// SUMMARY BAR + PILL
+// ============================================================
+function updateWardSummaryBar() {
+  if (!wardData) return;
+  document.getElementById("ward-total").textContent     = wardData.total_beds;
+  document.getElementById("ward-occupied").textContent  = wardData.occupied_beds;
+  document.getElementById("ward-available").textContent = wardData.available_beds;
+}
+
+function updateBedSummaryPill() {
+  if (!wardData) return;
+  const pill = document.getElementById("bed-summary-pill");
+  if (pill) {
+    pill.textContent = wardData.available_beds + " / " + wardData.total_beds + " free";
+    pill.style.background   = wardData.available_beds === 0 ? "#fef2f2" : "#ecfdf5";
+    pill.style.color        = wardData.available_beds === 0 ? "#be123c" : "#065f46";
+    pill.style.borderColor  = wardData.available_beds === 0 ? "#fca5a5" : "#6ee7b7";
+  }
+}
+
+// ============================================================
+// WARD TABS
+// ============================================================
+function switchWardTab(tab) {
+  activeWardTab = tab;
+  ["general","maternity","emergency"].forEach(t => {
+    const btn = document.getElementById("ward-tab-" + t);
+    if (!btn) return;
+    btn.className = t === tab
+      ? "flex-1 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-sm transition"
+      : "flex-1 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-600 hover:bg-slate-50 transition";
+  });
+  renderBedGrid(tab);
+}
+
+// ============================================================
+// BED GRID RENDER
+// ============================================================
+function renderBedGrid(wardType) {
+  const loading = document.getElementById("ward-loading");
+  const grid    = document.getElementById("bed-grid");
+  if (!wardData) return;
+
+  const ward = wardData.wards.find(w => w.ward_type === wardType);
+  if (!ward || !ward.beds.length) {
+    loading.style.display = "block";
+    loading.innerHTML     = '<p class="text-xs text-slate-400 text-center py-4">No beds in this ward.</p>';
+    grid.style.display    = "none";
+    return;
+  }
+
+  loading.style.display = "none";
+  grid.style.display    = "grid";
+  grid.innerHTML        = ward.beds.map(bed => buildBedTile(bed)).join("");
+}
+
+function buildBedTile(bed) {
+  const occ    = bed.is_occupied;
+  const bg     = occ ? "#fef2f2" : "#f0fdf4";
+  const border = occ ? "#fca5a5" : "#86efac";
+  const icon   = occ ? "🛏️" : "🟢";
+  const label  = bed.patient_label ? `<span style="font-size:8px;color:#64748b;display:block;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:64px;">${bed.patient_label}</span>` : "";
+
+  return `
+    <button onclick="toggleBed(${bed.id},${occ})"
+      id="bed-tile-${bed.id}"
+      style="background:${bg};border:2px solid ${border};border-radius:12px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:all 0.15s;min-height:72px;"
+      title="${occ ? "Occupied" + (bed.patient_label ? ": " + bed.patient_label : "") : "Available — tap to mark occupied"}">
+      <span style="font-size:1.3rem;">${icon}</span>
+      <span style="font-size:10px;font-weight:700;color:#0f172a;margin-top:2px;">Bed ${bed.bed_number}</span>
+      ${label}
+      <span style="font-size:9px;font-weight:600;color:${occ ? "#be123c" : "#15803d"};margin-top:1px;">${occ ? "Occupied" : "Free"}</span>
+    </button>`;
+}
+
+// ============================================================
+// TOGGLE BED — tap handler
+// ============================================================
+function toggleBed(bedId, currentlyOccupied) {
+  const newOccupied = !currentlyOccupied;
+
+  if (newOccupied) {
+    // Prompt for patient label before committing
+    pendingBedToggle = { bedId, newOccupied };
+    document.getElementById("patient-label-input").value = "";
+    document.getElementById("patient-label-modal").classList.remove("hidden");
+    document.getElementById("patient-label-modal").classList.add("flex");
+    setTimeout(() => document.getElementById("patient-label-input").focus(), 50);
+  } else {
+    // Freeing a bed — no label needed, just commit
+    commitBedToggle(bedId, false, null);
+  }
+}
+
+function confirmPatientLabel(useLabel) {
+  document.getElementById("patient-label-modal").classList.add("hidden");
+  document.getElementById("patient-label-modal").classList.remove("flex");
+  if (!pendingBedToggle) return;
+  const { bedId, newOccupied } = pendingBedToggle;
+  const label = useLabel ? (document.getElementById("patient-label-input").value.trim() || null) : null;
+  pendingBedToggle = null;
+  commitBedToggle(bedId, newOccupied, label);
+}
+
+async function commitBedToggle(bedId, isOccupied, patientLabel) {
+  // Optimistic UI — update tile immediately
+  const tile = document.getElementById("bed-tile-" + bedId);
+  if (tile) tile.style.opacity = "0.5";
+
+  try {
+    const res = await fetch(API_BASE + "/beds/" + bedId, {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ is_occupied: isOccupied, patient_label: patientLabel }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    // Update local wardData so the grid stays consistent without a full reload
+    for (const ward of (wardData?.wards || [])) {
+      const bed = ward.beds.find(b => b.id === bedId);
+      if (bed) {
+        bed.is_occupied   = isOccupied;
+        bed.patient_label = isOccupied ? patientLabel : null;
+        // Recompute ward counts
+        ward.occupied  = ward.beds.filter(b => b.is_occupied).length;
+        ward.available = ward.total - ward.occupied;
+        break;
+      }
+    }
+    // Recompute totals
+    if (wardData) {
+      wardData.occupied_beds  = wardData.wards.reduce((s, w) => s + w.occupied, 0);
+      wardData.available_beds = wardData.total_beds - wardData.occupied_beds;
     }
 
-    // --- MEDICINE INVENTORY DASHBOARD RENDER ---
-    function renderMedicineInventory() {
-      const container = document.getElementById('medicine-inventory-list');
-      const searchQuery = document.getElementById('med-search-input').value.toLowerCase().trim();
-      container.innerHTML = '';
+    renderBedGrid(activeWardTab);
+    updateWardSummaryBar();
+    updateBedSummaryPill();
+    showToast(isOccupied ? "Bed marked occupied" : "Bed marked free", "success");
+  } catch (e) {
+    if (tile) tile.style.opacity = "1";
+    showToast("Update failed — " + (e.message || "check connection"), "error");
+  }
+}
 
-      const today = new Date();
-      let lowStockCount = 0;
-      let nearExpCount = 0;
+// Load initial bed summary pill on PHC selection
+async function refreshBedSummaryPill() {
+  if (!currentPhcId) return;
+  try {
+    // Use the main beds endpoint — it auto-seeds beds if none exist yet
+    const res = await fetch(API_BASE + "/beds/" + currentPhcId);
+    if (!res.ok) return;
+    wardData = await res.json();
+    updateBedSummaryPill();
+  } catch { /* silent */ }
+}
 
-      const filteredList = localInventory.filter(item => 
-        item.name.toLowerCase().includes(searchQuery) || item.batch.toLowerCase().includes(searchQuery)
-      );
+async function loadAttendance() {
+  const list = document.getElementById("attendance-list");
+  if (!currentPhcId) {
+    list.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">Select a PHC to view staff attendance.</p>';
+    return;
+  }
+  document.getElementById("attendance-loading").classList.remove("hidden");
+  try {
+    const response = await fetch(API_BASE + "/staff/" + currentPhcId + "/today");
+    if (response.status === 404) {
+      // Staff attendance not seeded yet for this PHC
+      list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No staff roster found. Staff attendance will appear here once seeded.</p>';
+      document.getElementById("attendance-count").textContent = "— / — on duty";
+      return;
+    }
+    if (!response.ok) throw new Error("Attendance could not be loaded.");
+    const data = await response.json();
+    const today = new Date(data.work_date + "T00:00:00");
+    document.getElementById("attendance-date").textContent = today.toLocaleDateString("en-IN", {
+      weekday: "short", day: "numeric", month: "short",
+    });
+    document.getElementById("attendance-count").textContent = `${data.present_count} / ${data.total_staff} on duty`;
+    list.innerHTML = "";
+    if (!data.staff || !data.staff.length) {
+      list.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">No staff in this PHC roster.</p>';
+      return;
+    }
+    data.staff.forEach(member => {
+      const row = document.createElement("div");
+      row.className = "flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2";
+      row.innerHTML = `
+        <div class="min-w-0">
+          <p class="text-xs font-bold text-slate-900 truncate">${member.name}</p>
+          <p class="text-[10px] text-slate-500">${member.role}</p>
+        </div>
+        <div class="flex shrink-0 items-center gap-2">
+          <span class="text-[10px] font-semibold whitespace-nowrap ${member.is_present ? 'text-emerald-700' : 'text-slate-400'}">
+            ${member.is_present ? 'Present' : 'Absent'}
+          </span>
+          <button type="button" onclick="toggleAttendance(${member.id}, ${member.is_present}, this)"
+            class="${member.is_present ? 'border border-slate-300 bg-white text-slate-700' : 'bg-emerald-600 text-white'} px-2.5 py-1.5 rounded-lg text-[10px] font-bold">
+            ${member.is_present ? 'Mark Absent' : 'Mark Present'}
+          </button>
+        </div>`;
+      list.appendChild(row);
+    });
+  } catch (error) {
+    list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Staff attendance coming soon.</p>';
+  } finally {
+    document.getElementById("attendance-loading").classList.add("hidden");
+  }
+}
 
-      filteredList.forEach(item => {
-        const expDate = new Date(item.expiry);
-        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+async function toggleAttendance(staffId, currentlyPresent, btn) {
+  btn.disabled = true;
+  try {
+    const res = await fetch(API_BASE + "/staff/" + staffId, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_present: !currentlyPresent }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(!currentlyPresent ? "Marked present" : "Marked absent", "success");
+    await loadAttendance();
+  } catch (e) {
+    btn.disabled = false;
+    showToast("Update failed — " + (e.message || "check connection"), "error");
+  }
+}
 
-        let isLow = item.quantity <= 10;
-        let isNearExp = diffDays <= 30 && diffDays >= 0;
+async function recordAttendance(staffId, action, button) {
+  button.disabled = true;
+  try {
+    const res = await fetch(API_BASE + "/staff/" + staffId, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_present: action === "check-in" }),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast(action === "check-in" ? "Check-in recorded" : "Check-out recorded", "success");
+    await loadAttendance();
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message || "Attendance update failed", "error");
+  }
+}
 
-        if (isLow) lowStockCount++;
-        if (isNearExp) nearExpCount++;
+// ============================================================
+// CONFIG & STATE
+// ============================================================
+const API_BASE = "/api/v1";
 
-        let badgeHtml = "";
-        let borderClass = "border-slate-200";
-        let progressBg = "bg-emerald-500";
+let currentPhcId      = null;
+let currentPhcName    = "";
+let allPhcs           = [];
+let districtNetwork   = [];
+let districtOrders    = [];
+let currentDistrict   = localStorage.getItem("district_view") || localStorage.getItem("phc_district") || "Chikkaballapur";
+let localInventory    = [];
+let currentActionType = "received";
+let currentPhotoBlob  = null;
+let currentAudioBlob  = null;
+let audioAttachedFlag = false;
+let isRecording       = false;
+let mediaRecorder     = null;
+let audioChunks       = [];
+let entryCounter      = 0;
+let currentLang       = "en";
 
-        if (isNearExp) {
-          badgeHtml += `<span class="bg-purple-100 text-purple-800 border border-purple-200 px-2 py-0.5 rounded text-[10px] font-bold">Near Expiry</span>`;
-        }
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type = "info", duration = 3500) {
+  const c = document.getElementById("toast-container");
+  const t = document.createElement("div");
+  t.className = "toast " + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add("show")));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 300); }, duration);
+}
 
-        if (isLow) {
-          badgeHtml += `<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold">Low (${item.quantity})</span>`;
-          borderClass = "border-rose-300";
-          progressBg = "bg-rose-500";
-        } else if (item.quantity <= 50) {
-          badgeHtml += `<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold">Medium (${item.quantity})</span>`;
-          progressBg = "bg-amber-500";
-        } else {
-          badgeHtml += `<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">In Stock (${item.quantity})</span>`;
-        }
+// ============================================================
+// TRANSLATIONS
+// ============================================================
+const translations = {
+  en: { banner:"Everything has reached the centre", noSignal:"No signal", subcentreBtn:"Sub-centre / PHC", districtBtn:"District view", headline:"What do you want to record?", rcvdTitle:"Stock received", rcvdDesc:"Supplies & medicines arriving today", givenTitle:"Stock given out", givenDesc:"Dispensed to patients or sub-centres", trackTitle:"Medicine Stock Monitor", trackSubtitle:"Live inventory levels & FEFO tracking", metricTotal:"Total SKUs", metricLow:"Low Stock", metricNear:"Near Expiry", entriesPhone:"Entries this session", addMedBtn:"Add Medicine To Inventory", lblMedName:"Medicine Name", lblBatchNum:"Batch Number", lblExpiryDate:"Expiry Date", lblQty:"Quantity (Units)", lblMedia:"Verification Media (Receipt / Voice)", takePhoto:"Take Photo", voiceNote:"Voice Note", districtTitle:"Chikkaballapur block, all sub-centres", districtSubtitle:"District view • block coordinator", pipelineSent:"Requisition Sent", pipelineTransit:"In Transit", mapTitle:"Chikkaballapur Block Map View", transfersTitle:"Stock Transfers Log" },
+  hi: { banner:"सब कुछ केंद्र पर पहुंच चुका है", noSignal:"सिग्नल नहीं है", subcentreBtn:"उप-केंद्र / पीएचसी", districtBtn:"जिला दृश्य", headline:"आप क्या दर्ज करना चाहते हैं?", rcvdTitle:"स्टॉक प्राप्त हुआ", rcvdDesc:"आज आने वाली दवाइयां", givenTitle:"स्टॉक दिया गया", givenDesc:"मरीजों को दी गई दवाएं", trackTitle:"दवा स्टॉक मॉनिटर", trackSubtitle:"लाइव स्टॉक स्तर", metricTotal:"कुल दवाएं", metricLow:"कम स्टॉक", metricNear:"जल्द एक्सपायर", entriesPhone:"इस सत्र में प्रविष्टियां", addMedBtn:"इन्वेंट्री में जोड़ें", lblMedName:"दवा का नाम", lblBatchNum:"बैच नंबर", lblExpiryDate:"एक्सपायरी", lblQty:"मात्रा", lblMedia:"सत्यापन मीडिया", takePhoto:"फोटो लें", voiceNote:"वॉइस नोट", districtTitle:"चिक्काबल्लापुर ब्लॉक", districtSubtitle:"जिला दृश्य", pipelineSent:"भेजा गया", pipelineTransit:"मार्ग में है", mapTitle:"नक्शा दृश्य", transfersTitle:"स्टॉक स्थानांतरण" },
+  kn: { banner:"ಎಲ್ಲವೂ ಕೇಂದ್ರವನ್ನು ತಲುಪಿದೆ", noSignal:"ಸಿಗ್ನಲ್ ಇಲ್ಲ", subcentreBtn:"ಉಪ-ಕೇಂದ್ರ / PHC", districtBtn:"ಜಿಲ್ಲಾ ನೋಟ", headline:"ನೀವು ಏನನ್ನು ದಾಖಲಿಸಲು ಬಯಸುತ್ತೀರಿ?", rcvdTitle:"ಸ್ಟಾಕ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ", rcvdDesc:"ಇಂದು ತಲುಪುವ ಔಷಧಗಳು", givenTitle:"ಸ್ಟಾಕ್ ನೀಡಲಾಗಿದೆ", givenDesc:"ರೋಗಿಗಳಿಗೆ ನೀಡಲಾಗಿದೆ", trackTitle:"ಔಷಧ ಸ್ಟಾಕ್ ಮಾನಿಟರ್", trackSubtitle:"ಲೈವ್ ದಾಸ್ತಾನು ಮಟ್ಟಗಳು", metricTotal:"ಒಟ್ಟು ಔಷಧಗಳು", metricLow:"ಕಡಿಮೆ ಸ್ಟಾಕ್", metricNear:"ಬೇಗನೆ ಎಕ್ಸ್ ಪೈರಿ", entriesPhone:"ಈ ಸೆಷನ್‌ನಲ್ಲಿ ನಮೂದುಗಳು", addMedBtn:"ದಾಸ್ತಾನಿಗೆ ಸೇರಿಸಿ", lblMedName:"ಔಷಧದ ಹೆಸರು", lblBatchNum:"ಬ್ಯಾಚ್ ಸಂಖ್ಯೆ", lblExpiryDate:"ಅಂತ್ಯ ದಿನಾಂಕ", lblQty:"ಪ್ರಮಾಣ", lblMedia:"ಪರಿಶೀಲನೆ ಮಾಧ್ಯಮ", takePhoto:"ಫೋಟೋ ತೆಗೆಯಿರಿ", voiceNote:"ವಾಯ್ಸ್ ನೋಟ್", districtTitle:"ಚಿಕ್ಕಬಳ್ಳಾಪುರ ಬ್ಲಾಕ್", districtSubtitle:"ಜಿಲ್ಲಾ ನೋಟ", pipelineSent:"ಕಳುಹಿಸಲಾಗಿದೆ", pipelineTransit:"ದಾರಿಯಲ್ಲಿದೆ", mapTitle:"ನಕ್ಷೆ ನೋಟ", transfersTitle:"ಸ್ಟಾಕ್ ವರ್ಗಾವಣೆ ಲಾಗ್" },
+  ta: { banner:"அனைத்தும் மையத்தை அடைந்தது", noSignal:"சிக்னல் இல்லை", subcentreBtn:"துணை மையம் / PHC", districtBtn:"மாவட்ட பார்வை", headline:"நீங்கள் எதை பதிவு செய்ய விரும்புகிறீர்கள்?", rcvdTitle:"சரக்கு பெறப்பட்டது", rcvdDesc:"இன்று வரும் மருந்துகள்", givenTitle:"சரக்கு வழங்கப்பட்டது", givenDesc:"நோயாளிகளுக்கு வழங்கப்பட்டது", trackTitle:"மருந்து இருப்பு கண்காணிப்பு", trackSubtitle:"நேரலை இருப்பு நிலை", metricTotal:"மொத்த மருந்துகள்", metricLow:"குறைந்த இருப்பு", metricNear:"விரைவில் காலாவதி", entriesPhone:"இந்த அமர்வில் பதிவு", addMedBtn:"இருப்பில் சேர்க்கவும்", lblMedName:"மருந்தின் பெயர்", lblBatchNum:"பேட்ச் எண்", lblExpiryDate:"காலாவதி தேதி", lblQty:"அளவு", lblMedia:"சரிபார்ப்பு ஊடகம்", takePhoto:"படம் எடுக்கவும்", voiceNote:"குரல் பதிவு", districtTitle:"சிக்கபல்லாபூர் பிளாக்", districtSubtitle:"மாவட்ட பார்வை", pipelineSent:"அனுப்பப்பட்டது", pipelineTransit:"வழியில் உள்ளது", mapTitle:"வரைபட பார்வை", transfersTitle:"பரிமாற்றப் பதிவு" }
+};
 
-        const fillPercentage = Math.min(100, Math.round((item.quantity / (item.maxStock || 150)) * 100));
+// ============================================================
+// ONLINE STATUS
+// ============================================================
+function updateOnlineStatus() {
+  const badge = document.getElementById("txt-signal-badge");
+  if (!badge) return;
+  if (navigator.onLine) {
+    badge.innerText = "Online";
+    badge.className = "bg-emerald-500/80 text-white text-[11px] px-2.5 py-0.5 rounded-md font-bold";
+  } else {
+    badge.innerText = translations[currentLang]?.noSignal || "No signal";
+    badge.className = "bg-emerald-800/40 text-emerald-100 text-[11px] px-2.5 py-0.5 rounded-md font-bold";
+  }
+}
+window.addEventListener("online",  updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
 
-        const div = document.createElement('div');
-        div.className = `bg-white border ${borderClass} p-3 rounded-xl space-y-2 shadow-sm hover:border-emerald-500 transition`;
-        div.innerHTML = `
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="font-bold text-slate-900 text-xs sm:text-sm">${item.name}</h3>
-              <p class="text-[10px] sm:text-[11px] text-slate-500 font-mono">Batch: ${item.batch} • Exp: ${item.expiry}</p>
-            </div>
-            <div class="flex flex-wrap items-end justify-end gap-1">
-              ${badgeHtml}
-            </div>
+// ============================================================
+// LANGUAGE
+// ============================================================
+function setLanguage(lang) {
+  currentLang = lang;
+  const t = translations[lang];
+  const map = {
+    "txt-status-banner":"banner","txt-btn-subcentre":"subcentreBtn","txt-btn-district":"districtBtn",
+    "txt-headline":"headline","txt-action-rcvd-title":"rcvdTitle","txt-action-rcvd-desc":"rcvdDesc",
+    "txt-action-given-title":"givenTitle","txt-action-given-desc":"givenDesc",
+    "txt-tracking-title":"trackTitle","txt-tracking-subtitle":"trackSubtitle",
+    "txt-metric-total":"metricTotal","txt-metric-low":"metricLow","txt-metric-near":"metricNear",
+    "txt-entries-phone":"entriesPhone","btn-save-text":"addMedBtn",
+    "lbl-med-name":"lblMedName","lbl-batch-num":"lblBatchNum","lbl-expiry-date":"lblExpiryDate",
+    "lbl-qty":"lblQty","lbl-media":"lblMedia","txt-take-photo":"takePhoto","record-label":"voiceNote",
+    "txt-district-title":"districtTitle","txt-district-subtitle":"districtSubtitle",
+    "txt-pipeline-sent":"pipelineSent","txt-pipeline-transit":"pipelineTransit",
+    "txt-map-title":"mapTitle","txt-transfers-title":"transfersTitle"
+  };
+  Object.entries(map).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && t[key]) el.innerText = t[key];
+  });
+  updateOnlineStatus();
+  ["en","hi","kn","ta"].forEach(l => {
+    const btn = document.getElementById("lang-" + l);
+    if (btn) btn.className = l === lang
+      ? "bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs shadow-sm"
+      : "bg-white border border-slate-300 text-slate-700 font-bold py-2 rounded-xl text-xs hover:bg-slate-50";
+  });
+}
+
+// ============================================================
+// TASK 1: PHC SELECTOR
+// ============================================================
+async function loadPhcList() {
+  try {
+    const res = await fetch(API_BASE + "/phcs?limit=200");
+    if (!res.ok) throw new Error(res.status);
+    const phcs = await res.json();
+    allPhcs = phcs;
+    const districts = [...new Set(phcs.map(phc => phc.district).filter(Boolean))].sort();
+    if (!districts.includes(currentDistrict)) currentDistrict = districts[0] || "";
+    const districtSelect = document.getElementById("district-view-select");
+    districtSelect.innerHTML = districts.map(district => `<option value="${district}">${district}</option>`).join("");
+    districtSelect.value = currentDistrict;
+    document.getElementById("txt-district-title").textContent = currentDistrict + " district, all PHCs";
+    if (currentPhcId && !phcs.some(phc => phc.id === currentPhcId)) {
+      currentPhcId = null;
+      currentPhcName = "";
+      localStorage.removeItem("phc_id");
+      localStorage.removeItem("phc_name");
+      localStorage.removeItem("phc_district");
+      document.getElementById("phc-selector-overlay").classList.remove("hidden");
+    } else if (currentPhcId) {
+      const savedPhc = phcs.find(phc => phc.id === currentPhcId);
+      currentPhcName = savedPhc.name;
+      document.getElementById("phc-selector-overlay").classList.add("hidden");
+      document.getElementById("txt-phc-name").textContent = savedPhc.name;
+      document.getElementById("txt-phc-district").textContent = "· " + savedPhc.district;
+      refreshInventory();
+      refreshBedSummaryPill();
+      loadAttendance();
+    }
+    loadDistrictOverview();
+    document.getElementById("phc-loading").classList.add("hidden");
+    const list = document.getElementById("phc-list");
+    list.classList.remove("hidden");
+    if (!phcs.length) {
+      list.innerHTML = '<p class="text-xs text-slate-500 text-center">No PHCs found. Run the seed script first.</p>';
+      return;
+    }
+    list.innerHTML = phcs.map(p => `
+      <button onclick='selectPhc(${p.id},${JSON.stringify(p.name)},${JSON.stringify(p.district || "")})'
+        class="w-full text-left bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl p-3 transition shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-bold text-slate-900">${p.name}</p>
+            <p class="text-[11px] text-slate-500">${p.district}${p.block ? " · " + p.block : ""}</p>
           </div>
+          <span class="text-[10px] font-mono text-slate-400">${p.phc_code}</span>
+        </div>
+      </button>`).join("");
+  } catch {
+    document.getElementById("phc-loading").classList.add("hidden");
+    document.getElementById("phc-load-error").classList.remove("hidden");
+  }
+}
 
-          <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex border border-slate-200">
-            <div class="${progressBg} h-full rounded-full transition-all duration-500" style="width: ${fillPercentage}%"></div>
-          </div>
-        `;
-        container.appendChild(div);
-      });
+function selectPhc(id, name, district) {
+  currentPhcId   = id;
+  currentPhcName = name;
+  currentDistrict = district || currentDistrict;
+  localStorage.setItem("phc_id",       id);
+  localStorage.setItem("phc_name",     name);
+  localStorage.setItem("phc_district", district);
+  localStorage.setItem("district_view", currentDistrict);
+  const districtSelect = document.getElementById("district-view-select");
+  if (districtSelect) districtSelect.value = currentDistrict;
+  document.getElementById("txt-district-title").textContent = currentDistrict + " district, all PHCs";
+  document.getElementById("phc-selector-overlay").classList.add("hidden");
+  document.getElementById("txt-phc-name").textContent     = name;
+  document.getElementById("txt-phc-district").textContent = district ? "· " + district : "";
+  refreshInventory();
+  loadPipelineOrders();
+  loadTransfers();
+  refreshBedSummaryPill();
+  loadAttendance();
+  loadDistrictOverview();
+}
 
-      document.getElementById('metric-total-items').innerText = localInventory.length;
-      document.getElementById('metric-low-stock').innerText = lowStockCount;
-      document.getElementById('metric-near-exp').innerText = nearExpCount;
-      document.getElementById('shelf-count-badge').innerText = `${localInventory.length} Items`;
+function updateDistrictView() {
+  currentDistrict = document.getElementById("district-view-select").value;
+  localStorage.setItem("district_view", currentDistrict);
+  document.getElementById("txt-district-title").textContent = currentDistrict + " district, all PHCs";
+  loadDistrictOverview();
+}
 
-      const alertBanner = document.getElementById('fefo-alert-banner');
-      if (nearExpCount > 0) {
-        alertBanner.classList.remove('hidden');
-      } else {
-        alertBanner.classList.add('hidden');
-      }
+function showPhcSelector() {
+  document.getElementById("phc-loading").classList.remove("hidden");
+  document.getElementById("phc-list").classList.add("hidden");
+  document.getElementById("phc-load-error").classList.add("hidden");
+  document.getElementById("phc-selector-overlay").classList.remove("hidden");
+  loadPhcList();
+}
+
+// ============================================================
+// TASK 2: FETCH INVENTORY FROM DB
+// ============================================================
+async function refreshInventory() {
+  if (!currentPhcId) return;
+  document.getElementById("inventory-loading").classList.remove("hidden");
+  document.getElementById("medicine-inventory-list").innerHTML = "";
+  try {
+    const res = await fetch(API_BASE + "/phcs/" + currentPhcId + "/inventory");
+    if (!res.ok) throw new Error(res.status);
+    const items = await res.json();
+    localInventory = items.map(i => ({
+      id:         i.id,
+      name:       i.drug_name,
+      batch:      i.batch_no   || "—",
+      expiry:     i.expiry_date || "",
+      quantity:   i.quantity_on_hand,
+      maxStock:   i.max_stock_level || Math.max(200, i.quantity_on_hand * 2 + 50),
+      status:     i.stock_status,
+      nlem_code:  i.nlem_code,
+      unit:       i.unit,
+      avg_daily:  i.avg_daily_consumption,
+      lead_days:  i.supplier_lead_days,
+      safety_days:i.safety_stock_days,
+    }));
+    renderMedicineInventory();
+  } catch {
+    showToast("Could not load inventory — check connection", "error");
+    document.getElementById("medicine-inventory-list").innerHTML =
+      '<p class="text-xs text-slate-500 text-center py-4">Could not load inventory. Tap the refresh icon to retry.</p>';
+  } finally {
+    document.getElementById("inventory-loading").classList.add("hidden");
+  }
+}
+
+// ============================================================
+// RENDER INVENTORY
+// ============================================================
+function renderMedicineInventory() {
+  const container = document.getElementById("medicine-inventory-list");
+  const q = (document.getElementById("med-search-input").value || "").toLowerCase().trim();
+  container.innerHTML = "";
+  const today = new Date();
+  let lowCnt = 0, nearExpCnt = 0;
+
+  const filtered = localInventory.filter(item =>
+    item.name.toLowerCase().includes(q) || (item.batch || "").toLowerCase().includes(q)
+  );
+
+  if (!filtered.length) {
+    container.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">No medicines found' +
+      (q ? " for your search" : ". Add stock to get started") + '.</p>';
+  }
+
+  filtered.forEach(item => {
+    const expDate  = item.expiry ? new Date(item.expiry) : null;
+    const diffDays = expDate ? Math.ceil((expDate - today) / 86400000) : 999;
+    const isLow    = item.quantity <= 10 || item.status === "critical" || item.status === "low";
+    const isNearEx = diffDays <= 30 && diffDays >= 0;
+    if (isLow)    lowCnt++;
+    if (isNearEx) nearExpCnt++;
+
+    let badges = "";
+    let borderCls = "border-slate-200", progressBg = "bg-emerald-500";
+    if (isNearEx) badges += '<span class="bg-purple-100 text-purple-800 border border-purple-200 px-2 py-0.5 rounded text-[10px] font-bold">Near Expiry</span>';
+    if (isLow) {
+      badges += '<span class="bg-rose-100 text-rose-800 border border-rose-200 px-2 py-0.5 rounded text-[10px] font-bold">Low (' + item.quantity + ')</span>';
+      borderCls = "border-rose-300"; progressBg = "bg-rose-500";
+    } else if (item.quantity <= 50) {
+      badges += '<span class="bg-amber-100 text-amber-800 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold">Medium (' + item.quantity + ')</span>';
+      progressBg = "bg-amber-500";
+    } else {
+      badges += '<span class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">In Stock (' + item.quantity + ')</span>';
     }
 
-    // --- MODAL & SAVING STOCK ---
-    function openModal(type) {
-      currentActionType = type;
-      photoAttached = false;
-      audioAttached = false;
+    const fill = Math.min(100, Math.round((item.quantity / (item.maxStock || 150)) * 100));
+    const div  = document.createElement("div");
+    div.className = "bg-white border " + borderCls + " p-3 rounded-xl space-y-2 shadow-sm hover:border-emerald-500 transition";
+    div.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-slate-900 text-xs sm:text-sm">${item.name}</h3>
+          <p class="text-[10px] sm:text-[11px] text-slate-500 font-mono">Batch: ${item.batch} · Exp: ${item.expiry || "—"}</p>
+        </div>
+        <div class="flex flex-wrap items-end justify-end gap-1">${badges}</div>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200" style="height:0.375rem;">
+        <div class="${progressBg} h-full rounded-full" style="width:${fill}%;transition:width 0.5s;"></div>
+      </div>`;
+    container.appendChild(div);
+  });
 
-      const t = translations[currentLang];
-      document.getElementById('modal-title').innerText = type === 'received' ? t.rcvdTitle : t.givenTitle;
-      document.getElementById('photo-preview-box').classList.add('hidden');
-      document.getElementById('audio-preview-box').classList.add('hidden');
+  document.getElementById("metric-total-items").innerText = localInventory.length;
+  document.getElementById("metric-low-stock").innerText   = lowCnt;
+  document.getElementById("metric-near-exp").innerText    = nearExpCnt;
+  document.getElementById("shelf-count-badge").innerText  = localInventory.length + " Items";
+  document.getElementById("fefo-alert-banner").classList.toggle("hidden", nearExpCnt === 0);
+}
 
-      document.getElementById('entry-modal').classList.remove('hidden');
-      document.getElementById('entry-modal').classList.add('flex');
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(type) {
+  currentActionType = type;
+  currentPhotoBlob  = null;
+  currentAudioBlob  = null;
+  audioAttachedFlag = false;
+  const t = translations[currentLang];
+  document.getElementById("modal-title").innerText       = type === "received" ? t.rcvdTitle : t.givenTitle;
+  document.getElementById("entry-item").value            = "";
+  document.getElementById("entry-batch").value           = "";
+  document.getElementById("entry-expiry").value          = "";
+  document.getElementById("entry-qty").value             = "1";
+  document.getElementById("photo-preview-box").classList.add("hidden");
+  document.getElementById("audio-preview-box").classList.add("hidden");
+  document.getElementById("ai-status-bar").classList.add("hidden");
+  document.getElementById("entry-modal").classList.remove("hidden");
+  document.getElementById("entry-modal").classList.add("flex");
+}
+function closeModal() {
+  document.getElementById("entry-modal").classList.add("hidden");
+  document.getElementById("entry-modal").classList.remove("flex");
+}
+
+// ============================================================
+// TASK 4: CAMERA → Gemini Vision OCR
+// ============================================================
+async function handlePhotoCapture(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  currentPhotoBlob = file;
+  document.getElementById("photo-img").src = URL.createObjectURL(file);
+  document.getElementById("photo-preview-box").classList.remove("hidden");
+  setAiStatus("Scanning invoice with Gemini Vision…");
+  try {
+    const form = new FormData();
+    form.append("file", file, file.name || "invoice.jpg");
+    const res = await fetch(API_BASE + "/ai/invoice", { method: "POST", body: form });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (data.line_items && data.line_items.length > 0) {
+      const item = data.line_items[0];
+      if (item.drug_name)   document.getElementById("entry-item").value   = item.drug_name;
+      if (item.batch_no)    document.getElementById("entry-batch").value  = item.batch_no;
+      if (item.expiry_date) document.getElementById("entry-expiry").value = item.expiry_date;
+      if (item.quantity > 0) document.getElementById("entry-qty").value   = item.quantity;
+      showToast("✓ Gemini extracted " + data.line_items.length + " item(s). Review & save.", "success");
+    } else {
+      showToast("Photo scanned — no items detected. Fill in manually.", "info");
     }
+  } catch {
+    showToast("AI extraction unavailable — fill in manually.", "error");
+  } finally {
+    clearAiStatus();
+  }
+}
 
-    function closeModal() {
-      document.getElementById('entry-modal').classList.add('hidden');
-      document.getElementById('entry-modal').classList.remove('flex');
-    }
+// ============================================================
+// TASK 5: AUDIO RECORDING → Gemini Audio
+// ============================================================
+async function toggleAudioRecording() {
+  const btn   = document.getElementById("record-btn");
+  const label = document.getElementById("record-label");
+  const icon  = document.getElementById("record-icon");
 
-    function saveMedicineToInventory() {
-      const itemName = document.getElementById('entry-item').value.trim();
-      const batchNum = document.getElementById('entry-batch').value.trim() || 'B-2026-X1';
-      const expiryDate = document.getElementById('entry-expiry').value || '2027-01-01';
-      const qty = parseInt(document.getElementById('entry-qty').value) || 0;
-
-      if (!itemName) {
-        alert("Please enter a medicine name.");
-        return;
-      }
-
-      const existingIndex = localInventory.findIndex(i => i.name.toLowerCase() === itemName.toLowerCase() && i.batch === batchNum);
-
-      if (existingIndex !== -1) {
-        if (currentActionType === 'received') {
-          localInventory[existingIndex].quantity += qty;
-        } else {
-          localInventory[existingIndex].quantity = Math.max(0, localInventory[existingIndex].quantity - qty);
-        }
-      } else {
-        localInventory.push({
-          id: Date.now(),
-          name: itemName,
-          batch: batchNum,
-          expiry: expiryDate,
-          quantity: currentActionType === 'received' ? qty : 0,
-          maxStock: 150
-        });
-      }
-
-      const transferRoute = currentActionType === 'received' 
-        ? "Supplier / District → PHC Chikkaballapur" 
-        : "PHC Chikkaballapur → Sub-centre / Patient";
-
-      addTransferLogEntry(itemName, batchNum, qty, transferRoute, photoAttached, audioAttached);
-
-      entryCounter++;
-      document.getElementById('entries-count-badge').innerText = entryCounter;
-      renderMedicineInventory();
-      closeModal();
-    }
-
-    // --- CAMERA & AUDIO RECORDING HANDLERS ---
-    function handlePhotoCapture(event) {
-      const file = event.target.files[0];
-      if (file) {
-        document.getElementById('photo-img').src = URL.createObjectURL(file);
-        document.getElementById('photo-preview-box').classList.remove('hidden');
-        photoAttached = true;
-      }
-    }
-
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-
-    async function toggleAudioRecording() {
-      const btn = document.getElementById('record-btn');
-      const label = document.getElementById('record-label');
-      const icon = document.getElementById('record-icon');
-
-      if (!isRecording) {
+  if (!isRecording) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks   = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        currentAudioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        document.getElementById("audio-player").src = URL.createObjectURL(currentAudioBlob);
+        document.getElementById("audio-preview-box").classList.remove("hidden");
+        audioAttachedFlag = true;
+        setAiStatus("Transcribing voice note with Gemini…");
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) audioChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            const blob = new Blob(audioChunks, { type: 'audio/wav' });
-            document.getElementById('audio-player').src = URL.createObjectURL(blob);
-            document.getElementById('audio-preview-box').classList.remove('hidden');
-            audioAttached = true;
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-
-          btn.classList.add('bg-rose-100', 'border-rose-400', 'animate-pulse');
-          icon.classList.remove('text-emerald-600');
-          icon.classList.add('text-rose-600');
-          label.innerText = 'Stop';
-
-        } catch (err) {
-          alert('Microphone access required for recording voice notes.');
+          const form = new FormData();
+          form.append("file", currentAudioBlob, "voice.wav");
+          form.append("mime_type", "audio/wav");
+          const res = await fetch(API_BASE + "/ai/audio", { method: "POST", body: form });
+          if (!res.ok) throw new Error(await res.text());
+          const data = await res.json();
+          if (data.error) throw new Error(data.error);
+          if (data.movements && data.movements.length > 0) {
+            const mv = data.movements[0];
+            if (mv.drug_name)      document.getElementById("entry-item").value = mv.drug_name;
+            if (mv.quantity_delta) document.getElementById("entry-qty").value  = Math.abs(mv.quantity_delta);
+            showToast('✓ Gemini: "' + (data.raw_transcript || mv.drug_name) + '"', "success");
+          } else {
+            showToast("Voice processed — no movement detected. Fill in manually.", "info");
+          }
+        } catch {
+          showToast("AI transcription unavailable — fill in manually.", "error");
+        } finally {
+          clearAiStatus();
         }
-      } else {
-        if (mediaRecorder) {
-          mediaRecorder.stop();
-          isRecording = false;
-          btn.classList.remove('bg-rose-100', 'border-rose-400', 'animate-pulse');
-          icon.classList.remove('text-rose-600');
-          icon.classList.add('text-emerald-600');
-          label.innerText = translations[currentLang].voiceNote;
-        }
-      }
+      };
+      mediaRecorder.start();
+      isRecording = true;
+      btn.style.background   = "#ffe4e6";
+      btn.style.borderColor  = "#fb7185";
+      icon.classList.replace("text-emerald-600", "text-rose-600");
+      label.innerText = "Stop";
+    } catch {
+      alert("Microphone access required for recording voice notes.");
+    }
+  } else {
+    if (mediaRecorder) { mediaRecorder.stop(); isRecording = false; }
+    btn.style.background  = "";
+    btn.style.borderColor = "";
+    icon.classList.replace("text-rose-600", "text-emerald-600");
+    label.innerText = translations[currentLang].voiceNote;
+  }
+}
+
+function setAiStatus(msg) {
+  document.getElementById("ai-status-text").textContent = msg;
+  document.getElementById("ai-status-bar").classList.remove("hidden");
+}
+function clearAiStatus() {
+  document.getElementById("ai-status-bar").classList.add("hidden");
+}
+
+// ============================================================
+// TASK 3: SAVE TO DB
+// ============================================================
+async function saveMedicineToInventory() {
+  if (!currentPhcId) { showToast("Select a PHC first", "error"); return; }
+  const itemName   = (document.getElementById("entry-item").value || "").trim();
+  const batchNum   = (document.getElementById("entry-batch").value || "").trim() || null;
+  const expiryDate = document.getElementById("entry-expiry").value || null;
+  const qty        = parseInt(document.getElementById("entry-qty").value) || 0;
+
+  if (!itemName) { showToast("Please enter a medicine name", "error"); return; }
+  if (qty <= 0)  { showToast("Quantity must be at least 1",  "error"); return; }
+
+  const btn     = document.getElementById("btn-save-inventory");
+  const btnTxt  = document.getElementById("btn-save-text");
+  const btnSpin = document.getElementById("btn-save-spinner");
+  btn.disabled  = true;
+  btnTxt.textContent = "Saving…";
+  btnSpin.classList.remove("hidden");
+
+  try {
+    // Find existing item by drug name (+ batch if provided)
+    const existing = localInventory.find(i =>
+      i.name.toLowerCase() === itemName.toLowerCase() &&
+      (batchNum ? i.batch === batchNum : true)
+    );
+
+    if (existing) {
+      const newQty = currentActionType === "received"
+        ? existing.quantity + qty
+        : Math.max(0, existing.quantity - qty);
+      const patchRes = await fetch(API_BASE + "/inventory/" + existing.id, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quantity_on_hand: newQty }),
+      });
+      if (!patchRes.ok) throw new Error(await patchRes.text());
+      showToast("✓ " + itemName + " updated (" + (currentActionType === "received" ? "+" : "-") + qty + ")", "success");
+    } else {
+      const payload = {
+        phc_id:                currentPhcId,
+        nlem_code:             "MANUAL-" + Date.now(),
+        drug_name:             itemName,
+        unit:                  "units",
+        batch_no:              batchNum,
+        expiry_date:           expiryDate,
+        quantity_on_hand:      currentActionType === "received" ? qty : 0,
+        avg_daily_consumption: 5.0,
+        supplier_lead_days:    7,
+        safety_stock_days:     5,
+      };
+      const postRes = await fetch(API_BASE + "/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!postRes.ok) throw new Error(await postRes.text());
+      showToast("✓ " + itemName + " added to inventory", "success");
     }
 
-    // --- PIPELINE ADVANCEMENT ---
-    function advancePipeline(cardId, targetState) {
-      const card = document.getElementById(cardId);
-      if (!card) return;
+    entryCounter++;
+    document.getElementById("entries-count-badge").innerText = entryCounter;
+    closeModal();
+    await refreshInventory();
+  } catch (e) {
+    showToast("Save failed — " + (e.message || "check connection"), "error");
+  } finally {
+    btn.disabled = false;
+    btnTxt.textContent = translations[currentLang].addMedBtn;
+    btnSpin.classList.add("hidden");
+  }
+}
 
-      if (targetState === 'in-transit') {
-        const button = card.querySelector('button');
-        button.innerText = 'Mark as delivered';
-        button.className = 'w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition';
-        button.setAttribute('onclick', `advancePipeline('${cardId}', 'delivered')`);
+// ============================================================
+// VIEW TOGGLES
+// ============================================================
+function switchMainView(viewName) {
+  const subBtn   = document.getElementById("btn-subcentre");
+  const distBtn  = document.getElementById("btn-district");
+  const subView  = document.getElementById("view-subcentre");
+  const distView = document.getElementById("view-district");
+  const active   = "flex-1 py-2 rounded-xl bg-white text-emerald-700 font-bold shadow-sm text-center transition";
+  const inactive = "flex-1 py-2 rounded-xl text-slate-600 hover:text-slate-900 text-center transition";
+  if (viewName === "subcentre") {
+    subBtn.className = active; distBtn.className = inactive;
+    subView.classList.remove("hidden"); distView.classList.add("hidden");
+  } else {
+    distBtn.className = active; subBtn.className = inactive;
+    distView.classList.remove("hidden"); subView.classList.add("hidden");
+    loadDistrictOverview();
+  }
+}
 
-        document.getElementById('transit-cards-container').appendChild(card);
-        updatePipelineCounts();
-      } else if (targetState === 'delivered') {
-        card.remove();
-        updatePipelineCounts();
-      }
+async function loadDistrictOverview() {
+  if (!currentDistrict) return;
+  try {
+    const [networkRes, ordersRes] = await Promise.all([
+      fetch(API_BASE + "/analytics/network-map"),
+      fetch(API_BASE + "/orders?limit=500"),
+    ]);
+    if (!networkRes.ok || !ordersRes.ok) throw new Error("Could not load district data");
+    const [network, orders] = await Promise.all([networkRes.json(), ordersRes.json()]);
+    districtNetwork = network.filter(phc => phc.district === currentDistrict);
+    const districtPhcIds = new Set(districtNetwork.map(phc => phc.id));
+    districtOrders = orders.filter(order => districtPhcIds.has(order.phc_id));
+    renderDistrictMap();
+    renderDistrictPipeline();
+    renderDistrictTransfers(orders, districtPhcIds);
+  } catch {
+    document.getElementById("map-online-count").textContent = "District data unavailable";
+    document.getElementById("map-pin-info").textContent = "Could not load district PHCs. Check the connection and try again.";
+  }
+}
+
+function renderDistrictMap() {
+  const pins = document.getElementById("map-pins-container");
+  const count = document.getElementById("map-online-count");
+  pins.innerHTML = "";
+  document.getElementById("txt-map-title").textContent = currentDistrict + " District Map View";
+  count.textContent = districtNetwork.length + " PHCs";
+  if (!districtNetwork.length) {
+    document.getElementById("map-pin-info").textContent = "No PHCs are registered in this district.";
+    return;
+  }
+
+  const lats = districtNetwork.map(phc => phc.latitude);
+  const lons = districtNetwork.map(phc => phc.longitude);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const scale = (value, min, max) => max === min ? 50 : 12 + ((value - min) / (max - min)) * 76;
+  const statusColors = { healthy: "#059669", at_risk: "#d97706", critical: "#e11d48" };
+
+  districtNetwork.forEach(phc => {
+    const pin = document.createElement("button");
+    const color = statusColors[phc.health] || statusColors.at_risk;
+    pin.type = "button";
+    pin.textContent = phc.phc_code ? phc.phc_code.slice(-3) : "PHC";
+    pin.title = phc.name;
+    pin.setAttribute("aria-label", phc.name + ", " + phc.health.replace("_", " "));
+    pin.style.cssText = `position:absolute;left:${scale(phc.longitude,minLon,maxLon)}%;top:${100-scale(phc.latitude,minLat,maxLat)}%;transform:translate(-50%,-50%);background:${color};color:white;border:2px solid white;border-radius:9999px;min-width:34px;height:34px;padding:0 5px;font-size:9px;font-weight:800;box-shadow:0 1px 5px #0f172a55;`;
+    pin.addEventListener("click", () => {
+      document.getElementById("map-pin-info").textContent =
+        `${phc.name} · ${phc.district} · ${phc.health.replace("_", " ")} · ${phc.at_risk_items} items at risk`;
+    });
+    pins.appendChild(pin);
+  });
+  document.getElementById("map-pin-info").textContent = "Select a PHC marker to inspect its stock health.";
+}
+
+function renderDistrictPipeline() {
+  const sent = districtOrders.filter(order =>
+    ["draft", "requisition_sent", "vendor_confirmed"].includes(order.status)
+  );
+  const transit = districtOrders.filter(order => order.status === "in_transit");
+  const sentContainer = document.getElementById("sent-cards-container");
+  const transitContainer = document.getElementById("transit-cards-container");
+  document.getElementById("sent-count").textContent = sent.length;
+  document.getElementById("transit-count").textContent = transit.length;
+  sentContainer.innerHTML = "";
+  transitContainer.innerHTML = "";
+  if (!sent.length) sentContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No open requisitions in this district.</p>';
+  if (!transit.length) transitContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Nothing in transit in this district.</p>';
+  sent.forEach(order => sentContainer.appendChild(buildOrderCard(order, order.status)));
+  transit.forEach(order => transitContainer.appendChild(buildOrderCard(order, "in_transit")));
+}
+
+function renderDistrictTransfers(orders, districtPhcIds) {
+  const districtOrders = orders.filter(order => order.order_type === "inter_phc" &&
+    (districtPhcIds.has(order.phc_id) || districtPhcIds.has(order.source_phc_id))
+  );
+  const list = document.getElementById("transfers-log-list");
+  if (!districtOrders.length) {
+    list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No inter-PHC transfers in this district.</p>';
+    return;
+  }
+  const phcNames = new Map(allPhcs.map(phc => [phc.id, phc.name]));
+  list.innerHTML = districtOrders.map(order => `
+    <div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
+      <div>
+        <h4 class="font-bold text-slate-900 text-xs">${order.drug_name}</h4>
+        <p class="text-[11px] text-slate-500">${phcNames.get(order.source_phc_id) || "PHC"} → ${phcNames.get(order.phc_id) || "PHC"} · Qty: ${order.quantity_ordered}</p>
+        <p class="text-[10px] text-emerald-700 font-mono font-semibold">${order.status.replace(/_/g," ")}</p>
+      </div>
+      <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">Transfer</span>
+    </div>`).join("");
+}
+
+function switchDistrictTab(tabName) {
+  ["pipeline","map","transfers"].forEach(tab => {
+    const btn     = document.getElementById("tab-btn-" + tab);
+    const content = document.getElementById("tab-" + tab);
+    if (tab === tabName) {
+      btn.className = "bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs text-center shadow-sm transition";
+      content.classList.remove("hidden");
+    } else {
+      btn.className = "bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition";
+      content.classList.add("hidden");
     }
+  });
+  if (tabName === "transfers") loadDistrictOverview();
+}
 
-    function updatePipelineCounts() {
-      document.getElementById('sent-count').innerText = document.getElementById('sent-cards-container').children.length;
-      document.getElementById('transit-count').innerText = document.getElementById('transit-cards-container').children.length;
+// ============================================================
+// TASK 6: PIPELINE — fetch live orders, wire status buttons
+// ============================================================
+async function loadPipelineOrders() {
+  if (!currentPhcId) return;
+  document.getElementById("pipeline-loading").classList.remove("hidden");
+  document.getElementById("sent-cards-container").innerHTML    = "";
+  document.getElementById("transit-cards-container").innerHTML = "";
+
+  try {
+    const res = await fetch(API_BASE + "/orders?phc_id=" + currentPhcId + "&limit=100");
+    if (!res.ok) throw new Error(res.status);
+    const orders = await res.json();
+
+    const sent    = orders.filter(o => o.status === "requisition_sent" || o.status === "vendor_confirmed" || o.status === "draft");
+    const transit = orders.filter(o => o.status === "in_transit");
+
+    document.getElementById("sent-count").innerText    = sent.length;
+    document.getElementById("transit-count").innerText = transit.length;
+
+    const sentContainer    = document.getElementById("sent-cards-container");
+    const transitContainer = document.getElementById("transit-cards-container");
+
+    if (!sent.length) sentContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No open requisitions.</p>';
+    sent.forEach(order => sentContainer.appendChild(buildOrderCard(order, order.status)));
+
+    if (!transit.length) transitContainer.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Nothing in transit.</p>';
+    transit.forEach(order => transitContainer.appendChild(buildOrderCard(order, "in_transit")));
+
+  } catch {
+    showToast("Could not load orders", "error");
+  } finally {
+    document.getElementById("pipeline-loading").classList.add("hidden");
+  }
+}
+
+function buildOrderCard(order, currentStatus) {
+  const card = document.createElement("div");
+  card.id        = "order-card-" + order.id;
+  card.className = "bg-white border border-slate-200 p-3.5 rounded-xl space-y-2.5 shadow-sm";
+
+  const dateStr = order.created_at
+    ? new Date(order.created_at).toLocaleDateString("en-IN", { day:"2-digit", month:"short", year:"numeric" })
+    : "";
+
+  let actionBtn = "";
+  if (currentStatus === "draft") {
+    actionBtn = `<button onclick="advanceOrderStatus(${order.id},'requisition_sent')"
+      class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition">
+      Send requisition
+    </button>`;
+  } else if (currentStatus === "requisition_sent" || currentStatus === "vendor_confirmed") {
+    actionBtn = `<button onclick="advanceOrderStatus(${order.id},'in_transit')"
+      class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition">
+      Mark in transit
+    </button>`;
+  } else if (currentStatus === "in_transit") {
+    actionBtn = `<button onclick="advanceOrderStatus(${order.id},'delivered',${order.quantity_ordered})"
+      class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs shadow-sm transition">
+      Mark as delivered
+    </button>`;
+  }
+
+  card.innerHTML = `
+    <div>
+      <h3 class="text-base font-bold text-slate-900">${order.drug_name}</h3>
+      <p class="text-[11px] text-slate-500">${allPhcs.find(phc => phc.id === order.phc_id)?.name || "PHC"}</p>
+      <p class="text-xs text-emerald-600 font-semibold">Qty: ${order.quantity_ordered} ${order.unit || "units"}</p>
+      <p class="text-xs text-slate-500 mt-0.5">ORD-${order.id} · ${order.order_type || "vendor_order"}</p>
+      <p class="text-[10px] text-slate-400 mt-0.5">${dateStr}</p>
+    </div>
+    ${actionBtn}`;
+  return card;
+}
+
+async function advanceOrderStatus(orderId, newStatus, quantityDelivered) {
+  try {
+    const body = { status: newStatus };
+    if (newStatus === "delivered" && quantityDelivered) {
+      body.quantity_delivered = quantityDelivered;
+      body.actual_delivery_date = new Date().toISOString().slice(0, 10);
     }
-  </script>
+    const res = await fetch(API_BASE + "/orders/" + orderId + "/status", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast("✓ Order updated to " + newStatus.replace(/_/g," "), "success");
+    if (!document.getElementById("view-district").classList.contains("hidden")) {
+      await loadDistrictOverview();
+    } else {
+      await loadPipelineOrders();
+    }
+    await refreshInventory(); // quantity updates on delivery
+  } catch (e) {
+    showToast("Update failed — " + (e.message || "check connection"), "error");
+  }
+}
+
+// ============================================================
+// TRANSFERS TAB — recent inter-PHC orders for this PHC
+// ============================================================
+async function loadTransfers() {
+  if (!currentPhcId) return;
+  document.getElementById("transfers-loading").classList.remove("hidden");
+  document.getElementById("transfers-log-list").innerHTML = "";
+  try {
+    const res = await fetch(API_BASE + "/orders?phc_id=" + currentPhcId + "&order_type=inter_phc&limit=50");
+    if (!res.ok) throw new Error(res.status);
+    const orders = await res.json();
+    const list = document.getElementById("transfers-log-list");
+
+    if (!orders.length) {
+      list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No inter-PHC transfers yet.</p>';
+    } else {
+      list.innerHTML = orders.map(o => `
+        <div class="bg-white border border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
+          <div>
+            <h4 class="font-bold text-slate-900 text-xs">${o.drug_name}</h4>
+            <p class="text-[11px] text-slate-500">Qty: ${o.quantity_ordered} · ORD-${o.id}</p>
+            <p class="text-[10px] text-emerald-700 font-mono font-semibold">${o.status.replace(/_/g," ")}</p>
+          </div>
+          <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded">${o.order_type === "inter_phc" ? "Transfer" : "Vendor"}</span>
+        </div>`).join("");
+    }
+  } catch {
+    document.getElementById("transfers-log-list").innerHTML =
+      '<p class="text-xs text-slate-500 text-center py-2">Could not load transfers.</p>';
+  } finally {
+    document.getElementById("transfers-loading").classList.add("hidden");
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateOnlineStatus();
+
+// Validate the saved PHC against the district-scoped API before loading its data.
+const savedId = Number.parseInt(localStorage.getItem("phc_id") || "", 10);
+currentPhcId = Number.isInteger(savedId) ? savedId : null;
+loadPhcList();
+</script>
 </body>
 </html>
