@@ -62,7 +62,7 @@ logger = logging.getLogger("gemini_audio_stock_update")
 # Config — deliberately identical pattern to gemini_vision_ocr.py
 # ---------------------------------------------------------------------------
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAMES = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
 MAX_RETRIES = 2
 RETRY_BACKOFF_SECONDS = 1.5
 
