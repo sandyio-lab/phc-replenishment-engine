@@ -30,3 +30,5 @@
 * **Supply Chain Pipeline:** Built a Kanban-style pipeline for tracking order statuses from **Requisition Sent → Vendor Confirmed → In Transit → Delivered**.
 * **Interactive Network Map:** Developed a Leaflet.js-based map displaying PHC locations across the district, with locations color-coded according to stock health (**Green = Healthy, Red = At Risk**).
 * **Inter-PHC Transfer Interface:** Created a modal interface that displays recommended peer-to-peer stock transfers between nearby PHCs.
+
+All team members collaborated closely on integration, testing, and deployment to deliver a fully functional, production-ready solution.
