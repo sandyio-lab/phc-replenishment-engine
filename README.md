@@ -220,6 +220,7 @@ Sandra: Gemini AI Integrations (Vision, Audio, Surge Multiplier, SMS Engine) & R
 
 Bhavana: PHC Worker App, Camera/Audio Capture UI, Offline Storage & Local Inventory View
 
-Darren: District Admin Dashboard, Kanban Pipeline, Interactive Leaflet.js Map & Transfer Modal
+Darren Rufus Antony: District Admin Dashboard, Kanban Pipeline, Interactive Leaflet.js Map & Transfer Modal
+
 ------------------------------------------------------------------------------------------------------
 Solving for India — built to scale from a single district to healthcare networks across states
