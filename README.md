@@ -37,7 +37,7 @@ Public healthcare networks across rural India face severe medicine supply chain 
 
 ## Solution Overview
 
-Instead of acting as a passive inventory dashboard, this platform automates the end-to-end replenishment lifecycle:
+Instead of acting as a passive inventory dashboard, this platform automates the end-to-end replenishment lifecycle:    
 
 - **Zero-Touch Ingestion:** Captures stock via invoice/package photo scanning using Gemini Vision.
 - **Predictive Reordering:** Automatically detects low stock and upcoming expiries based on daily consumption velocity and vendor lead times.
