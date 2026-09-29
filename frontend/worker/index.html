@@ -19,6 +19,7 @@
     .animate-spin  { animation: spin  0.7s linear infinite; }
     /* layout */
     .flex { display: flex; } .hidden { display: none; } .grid { display: grid; }
+      .flex { display: flex; } .hidden { display: none !important; } .grid { display: grid; }
     .flex-col { flex-direction: column; } .flex-1 { flex: 1 1 0%; } .flex-wrap { flex-wrap: wrap; }
     .items-center { align-items: center; } .items-start { align-items: flex-start; }
     .justify-center { justify-content: center; } .justify-between { justify-content: space-between; }
@@ -721,11 +722,9 @@ async function loadAttendance() {
   }
   document.getElementById("attendance-loading").classList.remove("hidden");
   try {
-    const response = await fetch(API_BASE + "/staff/" + currentPhcId + "/today");
+    const response = await fetch(API_BASE + "/attendance/phcs/" + currentPhcId + "/today");
     if (response.status === 404) {
-      // Staff attendance not seeded yet for this PHC
-      list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No staff roster found. Staff attendance will appear here once seeded.</p>';
-      document.getElementById("attendance-count").textContent = "— / — on duty";
+      list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">PHC attendance could not be found.</p>';
       return;
     }
     if (!response.ok) throw new Error("Attendance could not be loaded.");
@@ -734,7 +733,7 @@ async function loadAttendance() {
     document.getElementById("attendance-date").textContent = today.toLocaleDateString("en-IN", {
       weekday: "short", day: "numeric", month: "short",
     });
-    document.getElementById("attendance-count").textContent = `${data.present_count} / ${data.total_staff} on duty`;
+    document.getElementById("attendance-count").textContent = `${data.on_duty} / ${data.total_staff} on duty`;
     list.innerHTML = "";
     if (!data.staff || !data.staff.length) {
       list.innerHTML = '<p class="text-xs text-slate-500 text-center py-2">No staff in this PHC roster.</p>';
@@ -743,53 +742,47 @@ async function loadAttendance() {
     data.staff.forEach(member => {
       const row = document.createElement("div");
       row.className = "flex items-center justify-between gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2";
-      row.innerHTML = `
-        <div class="min-w-0">
-          <p class="text-xs font-bold text-slate-900 truncate">${member.name}</p>
-          <p class="text-[10px] text-slate-500">${member.role}</p>
-        </div>
-        <div class="flex shrink-0 items-center gap-2">
-          <span class="text-[10px] font-semibold whitespace-nowrap ${member.is_present ? 'text-emerald-700' : 'text-slate-400'}">
-            ${member.is_present ? 'Present' : 'Absent'}
-          </span>
-          <button type="button" onclick="toggleAttendance(${member.id}, ${member.is_present}, this)"
-            class="${member.is_present ? 'border border-slate-300 bg-white text-slate-700' : 'bg-emerald-600 text-white'} px-2.5 py-1.5 rounded-lg text-[10px] font-bold">
-            ${member.is_present ? 'Mark Absent' : 'Mark Present'}
-          </button>
-        </div>`;
+      const identity = document.createElement("div");
+      identity.className = "min-w-0";
+      const name = document.createElement("p");
+      name.className = "text-xs font-bold text-slate-900 truncate";
+      name.textContent = member.full_name || "Unnamed staff member";
+      const designation = document.createElement("p");
+      designation.className = "text-[10px] text-slate-500";
+      designation.textContent = member.designation || "";
+      identity.append(name, designation);
+
+      const controls = document.createElement("div");
+      controls.className = "flex shrink-0 items-center gap-2";
+      const status = document.createElement("span");
+      const onDuty = member.status === "on_duty";
+      const checkedOut = member.status === "checked_out";
+      status.className = `text-[10px] font-semibold whitespace-nowrap ${onDuty ? "text-emerald-700" : "text-slate-400"}`;
+      status.textContent = onDuty ? "Present" : checkedOut ? "Checked out" : "Not checked in";
+
+      const action = checkedOut ? null : onDuty ? "check-out" : "check-in";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `${onDuty ? "border border-slate-300 bg-white text-slate-700" : "bg-emerald-600 text-white"} px-2.5 py-1.5 rounded-lg text-[10px] font-bold`;
+      button.textContent = checkedOut ? "Shift complete" : onDuty ? "Check Out" : "Check In";
+      button.disabled = checkedOut;
+      if (action) button.addEventListener("click", () => recordAttendance(member.staff_id, action, button));
+      controls.append(status, button);
+      row.append(identity, controls);
       list.appendChild(row);
     });
   } catch (error) {
-    list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Staff attendance coming soon.</p>';
+    list.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Attendance could not be loaded.</p>';
   } finally {
     document.getElementById("attendance-loading").classList.add("hidden");
-  }
-}
-
-async function toggleAttendance(staffId, currentlyPresent, btn) {
-  btn.disabled = true;
-  try {
-    const res = await fetch(API_BASE + "/staff/" + staffId, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_present: !currentlyPresent }),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    showToast(!currentlyPresent ? "Marked present" : "Marked absent", "success");
-    await loadAttendance();
-  } catch (e) {
-    btn.disabled = false;
-    showToast("Update failed — " + (e.message || "check connection"), "error");
   }
 }
 
 async function recordAttendance(staffId, action, button) {
   button.disabled = true;
   try {
-    const res = await fetch(API_BASE + "/staff/" + staffId, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_present: action === "check-in" }),
+    const res = await fetch(API_BASE + "/attendance/staff/" + staffId + "/" + action, {
+      method: "POST",
     });
     if (!res.ok) throw new Error(await res.text());
     showToast(action === "check-in" ? "Check-in recorded" : "Check-out recorded", "success");
@@ -897,7 +890,7 @@ function setLanguage(lang) {
 // ============================================================
 // TASK 1: PHC SELECTOR
 // ============================================================
-async function loadPhcList() {
+async function loadPhcList(showSelector = false) {
   try {
     const res = await fetch(API_BASE + "/phcs?limit=200");
     if (!res.ok) throw new Error(res.status);
@@ -909,14 +902,14 @@ async function loadPhcList() {
     districtSelect.innerHTML = districts.map(district => `<option value="${district}">${district}</option>`).join("");
     districtSelect.value = currentDistrict;
     document.getElementById("txt-district-title").textContent = currentDistrict + " district, all PHCs";
-    if (currentPhcId && !phcs.some(phc => phc.id === currentPhcId)) {
+    if (!showSelector && currentPhcId && !phcs.some(phc => phc.id === currentPhcId)) {
       currentPhcId = null;
       currentPhcName = "";
       localStorage.removeItem("phc_id");
       localStorage.removeItem("phc_name");
       localStorage.removeItem("phc_district");
       document.getElementById("phc-selector-overlay").classList.remove("hidden");
-    } else if (currentPhcId) {
+    } else if (!showSelector && currentPhcId) {
       const savedPhc = phcs.find(phc => phc.id === currentPhcId);
       currentPhcName = savedPhc.name;
       document.getElementById("phc-selector-overlay").classList.add("hidden");
@@ -985,7 +978,7 @@ function showPhcSelector() {
   document.getElementById("phc-list").classList.add("hidden");
   document.getElementById("phc-load-error").classList.add("hidden");
   document.getElementById("phc-selector-overlay").classList.remove("hidden");
-  loadPhcList();
+  loadPhcList(true);
 }
 
 // ============================================================
