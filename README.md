@@ -1,6 +1,8 @@
 # Autonomous PHC Medicine Replenishment & Supply Chain Resilience Engine
 
-An AI-powered platform that automates medicine stock tracking, reordering, and inter-facility redistribution for Primary Health Centres (PHCs) across rural India — built for **Build with AI: Code for Communities**, Track 03: *Smart Health & Supply Chain Resilience*.
+An AI-powered, offline-first platform that automates medicine stock tracking, dynamic reordering, and inter-facility redistribution for Primary Health Centres (PHCs) across rural India.
+
+Built for **Build with AI: Code for Communities**, Track 03: *Smart Health & Supply Chain Resilience*.
 
 > Built for India — designed to scale from a single district to healthcare networks across states.
 
@@ -14,181 +16,209 @@ An AI-powered platform that automates medicine stock tracking, reordering, and i
 - [System Architecture](#system-architecture)
 - [Google AI Integration](#google-ai-integration)
 - [Tech Stack](#tech-stack)
-- [Team](#team)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
-- [Risk Mitigations](#risk-mitigations)
-- [Hackathon Submission](#hackathon-submission)
+- [Risk Mitigations & Guardrails](#risk-mitigations--guardrails)
+- [Team](#team)
 
 ---
 
 ## Problem Statement
 
-Public healthcare across rural India faces severe medicine supply chain vulnerabilities:
+Public healthcare networks across rural India face severe medicine supply chain vulnerabilities:
 
-- **High data-entry friction** — overburdened PHC staff rely on manual paper registers, causing delayed stock updates.
-- **Reactive replenishment** — reorders are placed only after stock hits zero, ignoring vendor delivery lead times.
-- **Communication gaps** — local vendors and district warehouses operate in regional languages and lack integration with rigid central dashboards.
+- **High Friction Data Entry:** Overburdened PHC staff rely on manual paper registers, causing delayed stock updates.
+- **Reactive Replenishment:** Reorders are placed only after stock hits zero, ignoring vendor delivery lead times.
+- **Communication Gaps:** Local vendors and district warehouses operate in regional languages and lack integration with rigid central dashboards.
 
-The result: frequent stock-outs of essential medicines (Paracetamol, ORS, antibiotics) and wastage from expired drugs.
+**Impact:** Frequent stock-outs of essential medicines (Paracetamol, ORS, antibiotics) alongside simultaneous wastage from expired drugs.
+
+---
 
 ## Solution Overview
 
 Instead of acting as a passive inventory dashboard, this platform automates the end-to-end replenishment lifecycle:
 
-- **Zero-touch ingestion** — captures stock via invoice/package scanning using Gemini Vision.
-- **Predictive reordering** — automatically detects low stock and upcoming expiries based on daily consumption velocity.
-- **Surge-aware demand** — Gemini assesses seasonal and field-reported disease signals (e.g. monsoon illness, a local flu outbreak) and raises expected consumption before stock runs low.
-- **Automated vernacular dispatch** — generates and sends reorder requests to local vendors in their native language via SMS/WhatsApp.
-- **End-to-end tracking & inter-PHC transfers** — tracks shipments in real time and auto-routes emergency transfers from nearby surplus PHCs when vendor delivery is delayed, ranked by real road distance and drive time.
+- **Zero-Touch Ingestion:** Captures stock via invoice/package photo scanning using Gemini Vision.
+- **Predictive Reordering:** Automatically detects low stock and upcoming expiries based on daily consumption velocity and vendor lead times.
+- **Surge-Aware Forecasting:** Gemini assesses seasonal and field-reported disease signals (e.g., monsoon illness, local flu outbreaks) to apply a dynamic demand multiplier ($1.0\times$ to $2.5\times$) before stock runs low.
+- **Automated Vernacular Dispatch:** Generates and sends reorder requisitions directly to local vendors in their native language via SMS/WhatsApp.
+- **Smart Inter-PHC Transfers:** Identifies nearby surplus PHCs (within ~20 km) and automatically routes emergency transfers, ranked by real road distance and drive time.
+
+---
 
 ## Key Features
 
 | Feature | Description |
 |---|---|
-| Invoice/Package Scanning | Staff photograph a delivery register or carton; Gemini Vision extracts drug name, batch number, quantity, and expiry date into structured JSON. |
-| Vernacular Voice Logging | Staff log daily distribution via voice notes in regional languages (Hindi, Kannada, Tamil, etc.). |
-| Dynamic Reorder Engine | Reorders trigger based on consumption velocity and supplier lead times, not static zero-stock thresholds. |
-| Demand Surge Assessment | Gemini reasons over district, month, and field-reported signals to return a bounded surge multiplier (1.0–2.5x) with affected drug categories, rationale, and confidence. The multiplier is applied to daily consumption before the reorder point is calculated. |
-| Expiry Watchlist | Daily scan flags batches expiring within 30–60 days for priority distribution or transfer. |
-| Inter-PHC Redistribution | Identifies neighboring PHCs (within ~20 km) with surplus stock and generates peer-to-peer transfer requests. |
-| Road-Aware Transfer Routing | Donor PHCs are ranked by real road distance and drive time (OpenStreetMap OSRM, with optional Google Maps Routes API), and each suggestion shows its route source. |
-| Multilingual Vendor Requisition | Formats verified orders into localized text/voice messages dispatched via SMS/WhatsApp. |
-| Live Pipeline Tracking | Order lifecycle tracked through: `Requisition Sent → Vendor Confirmed → In Transit → Delivered & Verified`. |
-| Offline-First PWA | Stock logging works with zero connectivity; actions queue locally and sync automatically once online. |
-| Network Map | Interactive map of PHC locations, color-coded by stock health (green = healthy, red = at risk). |
+| **Invoice / Package Scanning** | Field staff photograph a delivery register or carton; Gemini Vision extracts drug name, batch number, quantity, and expiry date into structured JSON. |
+| **Vernacular Voice Logging** | Staff log daily distribution via voice notes in regional languages (Hindi, Kannada, Tamil, etc.). |
+| **Dynamic Reorder Engine** | Reorders trigger based on consumption velocity and supplier lead times rather than static zero-stock thresholds. |
+| **Demand Surge Assessment** | Gemini reasons over district, month, and field-reported signals to return a bounded surge multiplier ($1.0\times$ to $2.5\times$) applied to daily consumption before calculating reorder points. |
+| **Expiry Watchlist** | Daily automated scans flag batches expiring within 30–60 days for priority distribution or transfer. |
+| **Inter-PHC Redistribution** | Identifies neighboring PHCs with surplus stock and generates peer-to-peer transfer requests. |
+| **Road-Aware Transfer Routing** | Donor PHCs are ranked by real road distance and drive time (OpenStreetMap OSRM, with optional Google Maps Routes API). |
+| **Multilingual Vendor Messaging** | Formats verified orders into localized text messages dispatched via Fast2SMS / WhatsApp API. |
+| **Live Pipeline Tracking** | Order lifecycle tracked through four stages: `Requisition Sent → Vendor Confirmed → In Transit → Delivered & Verified`. |
+| **Offline-First PWA** | Stock logging works with zero connectivity; actions queue locally in IndexedDB and sync automatically once online. |
+| **Interactive Network Map** | Map interface displaying PHC locations color-coded by stock health (green = healthy, red = at risk). |
+
+---
 
 ## System Architecture
 
+```text
+[ Field Staff ]
+│
+├──> Photo OCR (Gemini Vision) / Vernacular Voice Note (Gemini Multimodal)
+│
+▼
+[ Offline-First PWA (Worker App) ] ──(IndexedDB Sync)──► [ Python Backend (FastAPI / Flask) ]
+│
+├──> Gemini AI Engine
+├──> OSRM / Google Maps Routing
+└──> PostgreSQL / SQLite DB
+│
+▼
+[ District Supplier (WhatsApp / SMS) ]
+│
+▼
+[ Live Track Admin Dashboard ]
+---
+
 ```
-[ PHC Staff ] ---> (Gemini Vision OCR / Voice) ---> [ Offline-First PWA ]
-                                                             │
-                                                     (Background Sync)
-                                                             ▼
-[ District Supplier ] <--- (WhatsApp / SMS API) <--- [ Python / Node Backend ]
-         │                                                   │
-  (Status Updates)                               (Demand Engine & Relays)
-         ▼                                                   ▼
-[ Live Track Dashboard ] <------------------------- [ PostgreSQL Database ]
-```
-
-**Layer 1 — Data Capture & Ingestion (Frontend + Gemini Vision)**
-Offline-first PWA for stock logging; Gemini Vision OCR parses invoices/cartons into structured JSON; vernacular voice logging for distribution updates.
-
-**Layer 2 — Intelligence & Demand Engine (Backend Core)**
-Dynamic reorder calculation based on consumption velocity and lead times; Gemini-based surge multiplier applied to expected consumption; expiry watchlist; inter-PHC redistribution logic for emergency transfers, with donors ranked by road distance and drive time.
-
-**Layer 3 — Action & Delivery Tracking (Communications & Workflow)**
-Gemini-formatted multilingual vendor requisitions dispatched via SMS/WhatsApp; live four-stage pipeline tracking.
 
 ## Google AI Integration
 
 | Touchpoint | Google AI Tool | Core Function |
 |---|---|---|
-| Document Scanning | Gemini Vision API | Extracts batch details, dosage, and expiry dates from invoices and packaging photos. |
-| Vernacular Communications | Gemini Flash API | Translates structured order payloads into localized, polite procurement text/voice notes for district suppliers. |
-| Voice Command Parsing | Gemini Multimodal | Converts rural dialect audio logs into deterministic JSON database updates. |
-| Demand Surge Risk Assessment | Gemini Flash API (structured JSON) | Reasons over district, month, and field-reported signals (e.g. "flu cases rising in Velhe block") to output a validated demand-surge multiplier (1.0–2.5x) with affected drug categories, rationale, and confidence. The multiplier feeds the reorder engine so orders are placed *before* a seasonal or outbreak-driven stock-out. |
+| **Document Scanning** | Gemini Vision API | Extracts batch details, dosage, and expiry dates from invoices and packaging photos. |
+| **Voice Command Parsing** | Gemini Multimodal | Converts rural dialect audio logs into deterministic JSON database updates. |
+| **Vernacular Communications** | Gemini Flash API | Translates structured order payloads into localized, polite procurement text for local suppliers. |
+| **Demand Surge Assessment** | Gemini Flash API | Reasons over district, month, and field signals to output a validated demand-surge multiplier (1.0X to 2.5X) with rationale and confidence. |
 
-Gemini is deliberately scoped to **translation, parsing, extraction, and bounded risk assessment only** — all quantities, drug IDs, and reorder math are computed deterministically in backend code (see [Risk Mitigations](#risk-mitigations)). The surge multiplier is schema-validated, capped at 1.0–2.5x, and falls back to a static Indian seasonality table if Gemini is unavailable.
+> **AI Scoping Principle:** Gemini is strictly scoped to translation, parsing, extraction, and bounded risk assessment. All medicine quantities, drug IDs, and reorder math are calculated deterministically in backend Python code.
 
-**Roadmap:** once 3+ months of real consumption history is available in BigQuery, the surge layer is replaced by a trained Vertex AI AutoML Forecasting model (nightly batch predictions) with IMD weather data and state health-bulletin signals as covariates.
-
-**Road routing:** transfer suggestions use OpenStreetMap OSRM by default, and the Google Maps Routes API when a `GOOGLE_MAPS_API_KEY` is configured. If both are unavailable, the system falls back to a straight-line estimate.
+---
 
 ## Tech Stack
 
-- **Backend:** Python (Flask/FastAPI), PostgreSQL/SQLite
-- **Frontend:** React / Next.js PWA with IndexedDB offline caching, Leaflet.js for mapping
-- **AI/ML:** Google `google-genai` SDK — Gemini Vision, Gemini Flash, Gemini Multimodal
-- **Routing:** OpenStreetMap OSRM (default), Google Maps Routes API (optional), haversine fallback
-- **Messaging:** Twilio / Fast2SMS / Meta WhatsApp API
-- **Deployment:** Cloud Run / Cloud Functions (suggested)
+- **Frontend:** HTML5, JavaScript (Offline PWA with IndexedDB caching), Leaflet.js (Map Interface)
+- **Backend:** Python (FastAPI / Flask), SQLAlchemy, PostgreSQL / SQLite (`phc.db`)
+- **AI & ML:** Google Gemini SDK (`google-genai`) — Gemini Vision, Gemini Flash, Gemini Multimodal
+- **Routing & Navigation:** OpenStreetMap OSRM API (Default), Google Maps Routes API (Optional fallback)
+- **Messaging:** Fast2SMS / Meta WhatsApp API / Twilio
+- **Deployment:** Cloud Run / Vercel
 
-## Team
-
-| Role | Owner | Responsibilities |
-|---|---|---|
-| Backend Dev 1 — System Architecture & Core Logic | Shreyas | Database models (PHCs, Inventory, Vendors, Orders), reorder math, inter-PHC distance calculations, data seeding script (50+ synthetic Indian PHCs, NLEM medicine codes), REST API gateway. |
-| Backend Dev 2 — Google GenAI & Communications | Sandra | Gemini Vision invoice parsing, Gemini audio intent/quantity extraction, multilingual SMS engine (Gemini Flash + Fast2SMS), Gemini demand-surge multiplier, road-routing module (OSRM / Google Maps). |
-| Frontend Dev 1 — PHC Mobile App / PWA | Bhavana | Worker-facing mobile web app, camera/audio capture UI, local inventory tables with expiry alerts. |
-| Frontend Dev 2 — District Admin & Network Dashboard | Darren | Kanban-style supply pipeline, interactive Leaflet.js PHC map, inter-PHC transfer modal UI with distance, ETA, and route-source badge. |
+---
 
 ## Project Structure
 
-```
+```text
 phc-replenishment-engine/
 ├── backend/
 │   ├── ai_integration/
-│   │   ├── gemini_vision_ocr.py         # Invoice/package photo → structured JSON
-│   │   ├── gemini_audio_stock_update.py # Voice note → stock movement JSON
-│   │   ├── gemini_sms_engine.py         # Vernacular vendor requisition + SMS dispatch
-│   │   ├── gemini_surge_multiplier.py   # Demand-surge risk assessment
-│   │   ├── maps_routing.py              # Road distance/ETA (OSRM / Google Maps / fallback)
-│   │   └── run_test.py                  # Manual test runner for AI modules
+│   │   ├── gemini_vision_ocr.py          # Invoice/packaging photo → structured JSON
+│   │   ├── gemini_audio_stock_update.py  # Voice note → stock movement JSON
+│   │   ├── gemini_sms_engine.py          # Vernacular vendor requisition + SMS dispatch
+│   │   ├── gemini_surge_multiplier.py    # Seasonal & outbreak demand-surge risk assessment
+│   │   ├── maps_routing.py               # Road distance/ETA (OSRM / Google Maps / fallback)
+│   │   └── run_test.py                   # Manual test runner for AI modules
 │   ├── app/
-│   │   ├── core/                        # Database setup, reorder math, demand engine
-│   │   ├── models/                      # PHC, Inventory, Vendor, Order schemas
-│   │   ├── schemas/                     # Pydantic request/response schemas
-│   │   ├── routes/                      # FastAPI routes (/api/v1)
-│   │   └── main.py                      # FastAPI entry point
-│   └── seed.py                          # Synthetic PHC, vendor, medicine and order data
+│   │   ├── core/                         # DB setup, dynamic reorder math, demand engine
+│   │   ├── models/                       # SQLAlchemy schemas (PHC, Inventory, Vendor, Orders)
+│   │   ├── schemas/                      # Pydantic request/response schemas
+│   │   ├── routes/                       # FastAPI routes (/api/v1)
+│   │   └── main.py                       # Application entry point
+│   ├── seed.py                           # Synthetic data seeder (50+ Indian PHCs, NLEM codes)
+│   └── phc.db                            # SQLite database instance
 ├── frontend/
-│   ├── Worker/                          # PHC staff app (camera, voice, inventory view)
-│   └── Dashboard/                       # District admin pipeline, map, transfers
-├── context/                             # Hackathon guidelines, prototype and team notes
-├── docs/
+│   ├── worker/                           # PHC staff app (Camera, Audio, Offline PWA)
+│   └── dashboard/                        # District admin pipeline, map, transfers
+├── context/                              # Hackathon guidelines and project notes
 ├── api/
-├── data/
+│   └── index.py                          # Serverless entry point
 ├── requirements.txt
-├── vercel.json                          # Vercel deployment config
+├── vercel.json                           # Vercel deployment configuration
 └── README.md
+---
+
 ```
+
 ## Getting Started
 
+### Prerequisites
+
+- Python 3.10+
+- Node.js or a local static HTTP file server
+
+### Environment Variables
+
+Create a `.env` file in the root directory (or export variables in your environment):
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+DATABASE_URL=sqlite:///./backend/phc.db
+FAST2SMS_API_KEY=your_fast2sms_api_key       # Optional
+GOOGLE_MAPS_API_KEY=your_google_maps_key     # Optional (OSRM used if omitted)
+OSRM_BASE_URL=http://router.project-osrm.org  # Optional demo server
+
+### Setup Instructions
+
+1. Clone the repository:
+
 ```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-python scripts/seed_data.py      # populate synthetic PHC + medicine data
-uvicorn api.main:app --reload    # or `flask run`
-
-# Frontend
-cd frontend/worker-app
-npm install
-npm run dev
+git clone <repository-url>
+cd phc-replenishment-engine
 ```
 
-Set the following environment variables before running:
+2. Install Backend Dependencies:
 
-```
-GEMINI_API_KEY=           # Gemini API key
-DATABASE_URL=             # PostgreSQL/SQLite connection string
-FAST2SMS_API_KEY=         # Fast2SMS API key for dispatching regional SMS alerts to PHC vendors
-GOOGLE_MAPS_API_KEY=      # Optional — enables Google Maps Routes API; without it, OSRM is used
-OSRM_BASE_URL=            # Optional — defaults to the public OSRM demo server
+```bash
+pip install -r backend/requirements.txt
 ```
 
-## Risk Mitigations
+3. Seed the Database:
 
-| Risk | Mitigation |
-|---|---|
-| LLM hallucination in drug names/quantities | Deterministic guardrails — raw calculations and drug IDs are managed strictly by backend code; Gemini is restricted to text translation, invoice parsing, and a bounded surge multiplier, all with strict JSON schema validation. |
-| Vendor digital exclusion | Human-in-the-loop approval — every reorder requires a single confirmation tap from the PHC pharmacist before sending. |
-| Intermittent rural connectivity | Store-and-forward architecture — actions queue in IndexedDB while offline and sync automatically once connectivity is restored. |
-| Surge model unavailable or wrong | Multiplier is capped at 1.0–2.5x and schema-validated; on any Gemini failure the system falls back to a static seasonality table, and every result is tagged with its source. |
-| Routing service unavailable | Provider chain — Google Maps (if configured), then OSRM, then a straight-line estimate — so transfer suggestions never fail; each result shows which source produced it. |
+```bash
+python backend/seed.py
+```
 
-## Hackathon Submission
+4. Run the Backend API Server:
 
-Built for **Build with AI: Code for Communities — Second Edition** (Google Cloud), Track 03: *Smart Health & Supply Chain Resilience*.
+```bash
+uvicorn backend.app.main:app --reload
+```
 
-Submission package checklist:
-- [ ] Source code (public or access-granted GitHub repo)
-- [ ] Demo video (3–5 min, end-to-end walkthrough)
-- [ ] Pitch deck (10–12 slides)
-- [ ] Brief description (2–3 lines)
-- [ ] Deployed live link
+5. Run Frontend Applications:
 
----
-*Solving for India — built to scale from a single district to healthcare networks across states.*
+Serve frontend/worker/index.html for field staff and frontend/dashboard/index.html for district management using any static file server.
+
+
+Risk Mitigations & Guardrails:
+
+### LLM Hallucinations
+Deterministic guardrails — raw calculations and drug IDs are managed strictly by backend code. Gemini is restricted to text translation, invoice parsing, and a bounded surge multiplier.
+
+### Vendor Exclusion
+Human-in-the-loop approval — every reorder requires a single confirmation tap from the PHC pharmacist before sending.
+
+### Rural Intermittent Connectivity
+Store-and-forward architecture — actions queue in IndexedDB while offline and sync automatically once connectivity is restored.
+
+### AI Surge Model Failure
+Multiplier is schema-validated and hard-capped at 1.0 *to 2.5. On any failure, the system falls back to a static seasonality matrix.
+
+### Routing Unavailability
+Provider chain falls back gracefully from Google Maps Routes → OpenStreetMap OSRM → Haversine straight-line calculation.
+-------------------------------------------------------------------------------------------------------
+Team
+Shreyas: Backend Architecture, DB Models, Core Reorder Math, Seed Data Engine & REST API Gateway
+
+Sandra: Gemini AI Integrations (Vision, Audio, Surge Multiplier, SMS Engine) & Road Routing Engine
+
+Bhavana: PHC Worker App, Camera/Audio Capture UI, Offline Storage & Local Inventory View
+
+Darren: District Admin Dashboard, Kanban Pipeline, Interactive Leaflet.js Map & Transfer Modal
+------------------------------------------------------------------------------------------------------
+Solving for India — built to scale from a single district to healthcare networks across states
