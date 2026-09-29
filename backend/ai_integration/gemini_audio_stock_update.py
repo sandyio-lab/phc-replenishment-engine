@@ -59,7 +59,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger("gemini_audio_stock_update")
 
 # ---------------------------------------------------------------------------
-# Config — deliberately identical pattern to gemini_vision_ocr.py
+# Config — same fallback-chain pattern as gemini_vision_ocr.py. If the first
+# model name is unavailable to your API key (e.g. a 404 "no longer available
+# to new users"), the next one in the list is tried automatically.
 # ---------------------------------------------------------------------------
 
 MODEL_NAMES = ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash"]
@@ -153,12 +155,18 @@ def extract_stock_updates(
     Send a voice-note recording to Gemini and return validated structured
     stock-movement data.
 
+    Tries each model in MODEL_NAMES in order (falling through on 404 /
+    "model not found" / "not available" errors) before backing off and
+    retrying the whole cycle, up to MAX_RETRIES times.
+
     Parameters
     ----------
     audio_bytes: raw bytes of the recorded clip.
-    mime_type: "audio/wav", "audio/mp3", "audio/aac", "audio/ogg", or "audio/flac".
-    use_fallback_on_failure: if True (default), returns cached sample data
-        instead of raising when the API call fails after retries.
+    mime_type: "audio/wav", "audio/mp3", "audio/aac", "audio/ogg", "audio/flac",
+        or "audio/mp4"/"audio/m4a" (iPhone Voice Memos / some browser recorders).
+    use_fallback_on_failure: if True, returns cached sample data instead of
+        raising when every model/attempt fails. Default False so calling
+        code can show the user an explicit "please try again" error.
 
     Returns
     -------
@@ -169,30 +177,48 @@ def extract_stock_updates(
 
     last_error: Optional[Exception] = None
 
-    for attempt in range(1, MAX_RETRIES + 2):
-        try:
-            client = _get_client()
-            response = client.models.generate_content(
-                model=MODEL_NAME,
-                contents=[
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
-                            types.Part.from_text(
-                                text="Transcribe this recording and extract any medicine stock movements mentioned."
-                            ),
-                        ],
-                    )
-                ],
-                config=types.GenerateContentConfig(
-                    system_instruction=_SYSTEM_INSTRUCTION,
-                    response_mime_type="application/json",
-                    response_schema=AudioStockExtraction,
-                    temperature=0.1,  # low temperature: faithful understanding, not creativity
-                ),
-            )
+    for attempt in range(1, MAX_RETRIES + 2):  # e.g. MAX_RETRIES=2 -> tries 1,2,3
+        client = _get_client()
+        response = None
 
+        for model_name in MODEL_NAMES:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=[
+                        types.Content(
+                            role="user",
+                            parts=[
+                                types.Part.from_bytes(data=audio_bytes, mime_type=mime_type),
+                                types.Part.from_text(
+                                    text="Transcribe this recording and extract any medicine stock movements mentioned."
+                                ),
+                            ],
+                        )
+                    ],
+                    config=types.GenerateContentConfig(
+                        system_instruction=_SYSTEM_INSTRUCTION,
+                        response_mime_type="application/json",
+                        response_schema=AudioStockExtraction,
+                        temperature=0.1,  # low temperature: faithful understanding, not creativity
+                    ),
+                )
+                break  # this model worked — stop trying further models
+            except Exception as e:  # model unavailable, not found, rate limited, etc.
+                last_error = e
+                logger.warning(
+                    "Gemini model %s failed on attempt %d (%s). Trying next model...",
+                    model_name, attempt, e,
+                )
+
+        if response is None:
+            # every model in MODEL_NAMES failed on this attempt
+            logger.warning("All Gemini models failed on attempt %d. Retrying...", attempt)
+            if attempt <= MAX_RETRIES:
+                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+            continue
+
+        try:
             raw_text = response.text
             data = json.loads(raw_text)
             result = AudioStockExtraction.model_validate(data)
@@ -206,9 +232,6 @@ def extract_stock_updates(
         except (ValidationError, json.JSONDecodeError) as e:
             last_error = e
             logger.warning("Attempt %d: Gemini output failed schema validation (%s). Retrying...", attempt, e)
-        except Exception as e:  # network errors, rate limits, timeouts, etc.
-            last_error = e
-            logger.warning("Attempt %d: API call failed (%s). Retrying...", attempt, e)
 
         if attempt <= MAX_RETRIES:
             time.sleep(RETRY_BACKOFF_SECONDS * attempt)
@@ -236,6 +259,8 @@ def _mime_type_from_filename(path: str) -> str:
         return "audio/aac"
     if lower.endswith(".flac"):
         return "audio/flac"
+    if lower.endswith(".m4a") or lower.endswith(".mp4"):
+        return "audio/mp4"  # iPhone Voice Memos default format
     return "audio/wav"
 
 
