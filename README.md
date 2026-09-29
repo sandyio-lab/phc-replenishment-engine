@@ -210,7 +210,8 @@ Store-and-forward architecture — actions queue in IndexedDB while offline and 
 Multiplier is schema-validated and hard-capped at 1.0 *to 2.5. On any failure, the system falls back to a static seasonality matrix.
 
 ### Routing Unavailability
-Provider chain falls back gracefully from Google Maps Routes → OpenStreetMap OSRM → Haversine straight-line calculation.
+Provider chain falls back gracefully from Google Maps Routes -> OpenStreetMap OSRM -> Haversine straight-line calculation.
+
 -------------------------------------------------------------------------------------------------------
 Team
 Shreyas: Backend Architecture, DB Models, Core Reorder Math, Seed Data Engine & REST API Gateway
