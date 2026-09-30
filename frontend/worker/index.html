@@ -305,6 +305,19 @@
         <option value="">Loading districts…</option>
       </select>
     </div>
+
+    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-3 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">District Attendance</h2>
+          <p id="district-attendance-date" class="text-[11px] text-slate-500">Loading attendance…</p>
+        </div>
+        <span id="district-attendance-count" class="bg-white border border-slate-300 text-slate-700 font-bold px-2.5 py-1 rounded-lg text-xs">—</span>
+      </div>
+      <div id="district-attendance-summary" class="grid grid-cols-3 gap-2"></div>
+      <div id="district-attendance-list" class="space-y-2"></div>
+    </div>
+
     <div class="grid grid-cols-3 gap-2">
       <button id="tab-btn-pipeline"  onclick="switchDistrictTab('pipeline')"  class="bg-emerald-600 text-white font-bold py-2 rounded-xl text-xs text-center shadow-sm transition">Pipeline</button>
       <button id="tab-btn-map"       onclick="switchDistrictTab('map')"       class="bg-white border border-slate-300 text-slate-600 font-semibold py-2 rounded-xl text-xs text-center hover:bg-slate-50 transition">Map</button>
@@ -756,14 +769,15 @@ async function loadAttendance() {
       const status = document.createElement("span");
       const onDuty = member.status === "on_duty";
       const checkedOut = member.status === "checked_out";
-      status.className = `text-[10px] font-semibold whitespace-nowrap ${onDuty ? "text-emerald-700" : "text-slate-400"}`;
-      status.textContent = onDuty ? "Present" : checkedOut ? "Checked out" : "Not checked in";
+      const durationLabel = member.worked_minutes ? ` • ${formatWorkedMinutes(member.worked_minutes)}` : "";
+      status.className = `text-[10px] font-semibold whitespace-nowrap ${checkedOut ? "text-emerald-700" : onDuty ? "text-emerald-700" : "text-slate-400"}`;
+      status.textContent = checkedOut ? `Checked out${durationLabel}` : onDuty ? `On duty${durationLabel}` : "Not checked in";
 
       const action = checkedOut ? null : onDuty ? "check-out" : "check-in";
       const button = document.createElement("button");
       button.type = "button";
       button.className = `${onDuty ? "border border-slate-300 bg-white text-slate-700" : "bg-emerald-600 text-white"} px-2.5 py-1.5 rounded-lg text-[10px] font-bold`;
-      button.textContent = checkedOut ? "Shift complete" : onDuty ? "Check Out" : "Check In";
+      button.textContent = checkedOut ? `Shift complete • ${formatWorkedMinutes(member.worked_minutes || 0)}` : onDuty ? "Check Out" : "Check In";
       button.disabled = checkedOut;
       if (action) button.addEventListener("click", () => recordAttendance(member.staff_id, action, button));
       controls.append(status, button);
@@ -784,7 +798,9 @@ async function recordAttendance(staffId, action, button) {
       method: "POST",
     });
     if (!res.ok) throw new Error(await res.text());
-    showToast(action === "check-in" ? "Check-in recorded" : "Check-out recorded", "success");
+    const payload = await res.json();
+    const workedLabel = payload.worked_minutes ? ` • ${formatWorkedMinutes(payload.worked_minutes)}` : "";
+    showToast(action === "check-in" ? "Check-in recorded" : `Check-out recorded${workedLabel}`, "success");
     await loadAttendance();
   } catch (error) {
     button.disabled = false;
@@ -1081,6 +1097,15 @@ function renderMedicineInventory() {
 // ============================================================
 // MODAL
 // ============================================================
+function formatWorkedMinutes(minutes) {
+  if (!minutes || minutes <= 0) return "0m";
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours && mins) return `${hours}h ${mins}m`;
+  if (hours) return `${hours}h`;
+  return `${mins}m`;
+}
+
 function openModal(type) {
   currentActionType = type;
   currentPhotoBlob  = null;
@@ -1088,6 +1113,7 @@ function openModal(type) {
   audioAttachedFlag = false;
   const t = translations[currentLang];
   document.getElementById("modal-title").innerText       = type === "received" ? t.rcvdTitle : t.givenTitle;
+  document.getElementById("btn-save-text").textContent = type === "received" ? "Add Medicine To Inventory" : "Record Stock Given Out";
   document.getElementById("entry-item").value            = "";
   document.getElementById("entry-batch").value           = "";
   document.getElementById("entry-expiry").value          = "";
@@ -1323,23 +1349,31 @@ async function saveMedicineToInventory() {
   btnSpin.classList.remove("hidden");
 
   try {
-    // Find existing item by drug name (+ batch if provided)
+    const isReceiving = currentActionType === "received";
     const existing = localInventory.find(i =>
       i.name.toLowerCase() === itemName.toLowerCase() &&
       (batchNum ? i.batch === batchNum : true)
     );
 
+    if (!isReceiving && !existing) {
+      showToast("This medicine has not been received yet. Add it as stock received first.", "error");
+      return;
+    }
+
+    if (!isReceiving && existing && qty > existing.quantity) {
+      showToast("Not enough stock for this issue — only " + existing.quantity + " units are available.", "error");
+      return;
+    }
+
     if (existing) {
-      const newQty = currentActionType === "received"
-        ? existing.quantity + qty
-        : Math.max(0, existing.quantity - qty);
+      const newQty = isReceiving ? existing.quantity + qty : existing.quantity - qty;
       const patchRes = await fetch(API_BASE + "/inventory/" + existing.id, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity_on_hand: newQty }),
       });
       if (!patchRes.ok) throw new Error(await patchRes.text());
-      showToast("✓ " + itemName + " updated (" + (currentActionType === "received" ? "+" : "-") + qty + ")", "success");
+      showToast("✓ " + itemName + " updated (" + (isReceiving ? "+" : "-") + qty + ")", "success");
     } else {
       const payload = {
         phc_id:                currentPhcId,
@@ -1348,7 +1382,7 @@ async function saveMedicineToInventory() {
         unit:                  "units",
         batch_no:              batchNum,
         expiry_date:           expiryDate,
-        quantity_on_hand:      currentActionType === "received" ? qty : 0,
+        quantity_on_hand:      qty,
         avg_daily_consumption: 5.0,
         supplier_lead_days:    7,
         safety_stock_days:     5,
@@ -1398,22 +1432,78 @@ function switchMainView(viewName) {
 async function loadDistrictOverview() {
   if (!currentDistrict) return;
   try {
-    const [networkRes, ordersRes] = await Promise.all([
+    const [networkRes, ordersRes, attendanceRes] = await Promise.all([
       fetch(API_BASE + "/analytics/network-map"),
       fetch(API_BASE + "/orders?limit=500"),
+      fetch(API_BASE + "/attendance/network/today"),
     ]);
-    if (!networkRes.ok || !ordersRes.ok) throw new Error("Could not load district data");
-    const [network, orders] = await Promise.all([networkRes.json(), ordersRes.json()]);
+    if (!networkRes.ok || !ordersRes.ok || !attendanceRes.ok) throw new Error("Could not load district data");
+    const [network, orders, attendance] = await Promise.all([
+      networkRes.json(), ordersRes.json(), attendanceRes.json(),
+    ]);
     districtNetwork = network.filter(phc => phc.district === currentDistrict);
     const districtPhcIds = new Set(districtNetwork.map(phc => phc.id));
     districtOrders = orders.filter(order => districtPhcIds.has(order.phc_id));
+    renderDistrictAttendance(attendance);
     renderDistrictMap();
     renderDistrictPipeline();
     renderDistrictTransfers(orders, districtPhcIds);
   } catch {
     document.getElementById("map-online-count").textContent = "District data unavailable";
     document.getElementById("map-pin-info").textContent = "Could not load district PHCs. Check the connection and try again.";
+    document.getElementById("district-attendance-date").textContent = "Attendance not available";
+    document.getElementById("district-attendance-list").innerHTML = '<p class="text-xs text-slate-400 text-center py-2">Attendance could not be loaded.</p>';
   }
+}
+
+function renderDistrictAttendance(data) {
+  const dateEl = document.getElementById("district-attendance-date");
+  const countEl = document.getElementById("district-attendance-count");
+  const summaryEl = document.getElementById("district-attendance-summary");
+  const listEl = document.getElementById("district-attendance-list");
+
+  const visiblePhcs = data.phcs.filter(phc => phc.district === currentDistrict);
+  const totals = visiblePhcs.reduce((sum, phc) => {
+    sum.phcs += 1;
+    sum.staff += phc.total_staff;
+    sum.on_duty += phc.on_duty;
+    sum.checked_out += phc.checked_out;
+    sum.not_checked_in += phc.not_checked_in;
+    return sum;
+  }, { phcs: 0, staff: 0, on_duty: 0, checked_out: 0, not_checked_in: 0 });
+
+  const workDate = new Date(data.work_date + "T00:00:00");
+  dateEl.textContent = workDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+  countEl.textContent = `${totals.on_duty} / ${totals.staff} on duty`;
+
+  const metrics = [
+    [totals.on_duty, "On duty"],
+    [totals.checked_out, "Checked out"],
+    [totals.not_checked_in, "Not in"],
+  ];
+  summaryEl.innerHTML = metrics.map(([value, label]) => `
+    <div class="bg-white border border-slate-200 rounded-xl p-2 text-center shadow-sm">
+      <div class="text-lg font-bold text-slate-800">${value}</div>
+      <div class="text-[10px] uppercase font-bold text-slate-500">${label}</div>
+    </div>
+  `).join("");
+
+  if (!visiblePhcs.length) {
+    listEl.innerHTML = '<p class="text-xs text-slate-400 text-center py-2">No PHCs in this district are reporting attendance.</p>';
+    return;
+  }
+
+  listEl.innerHTML = visiblePhcs.slice(0, 4).map(phc => `
+    <div class="bg-white border border-slate-200 rounded-xl p-2.5 shadow-sm">
+      <div class="flex justify-between items-center gap-2">
+        <div>
+          <h3 class="text-[11px] font-bold text-slate-900">${phc.phc_name}</h3>
+          <p class="text-[10px] text-slate-500">${phc.on_duty}/${phc.total_staff} on duty · ${phc.checked_out} out</p>
+        </div>
+        <span class="text-[10px] font-bold text-emerald-700">${phc.not_checked_in} pending</span>
+      </div>
+    </div>
+  `).join("");
 }
 
 function renderDistrictMap() {
