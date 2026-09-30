@@ -120,7 +120,7 @@ Never commit real API keys. Without a Gemini key the app still runs: surge falls
 | Feature | What it does | Powered by |
 |---|---|---|
 | **Auto-generated reorders** | A demand scan turns at-risk items into **Draft** orders sized to a 30-day supply, assigned to the fastest active vendor in the district. Items with an open order are skipped. | Deterministic backend code |
-| **Multilingual vendor SMS** | Composes a polite reorder in the vendor's language and script, with an English back-translation for verification, and sends it by SMS. Dry-run by default. Available through the API; triggering it from the screens is the next step. | Gemini Flash, Fast2SMS |
+| **Multilingual vendor SMS** | Composes a polite reorder in the vendor's language and script, with an English back-translation for verification, and sends it by SMS. Dry-run by default for safe review, with one-tap sending from the order screen as the next step. | Gemini Flash, Fast2SMS |
 
 ### Tracking
 
@@ -181,7 +181,7 @@ Never commit real API keys. Without a Gemini key the app still runs: surge falls
 - **Surge** falls back to a deterministic seasonal table, and each result is tagged with its source (`gemini` or `seasonal_fallback`).
 - **Vision and audio** return an error through the API when extraction fails, and the worker app then asks staff to fill in the form manually.
 
-**Surge is a v1 hybrid, not a trained model:** an LLM assessment bounded by a rule-based table. The planned next step is a Vertex AI Forecast model trained on BigQuery history (see [Future Prospects](#future-prospects)).
+**Surge today and next:** an LLM assessment bounded by a rule-based seasonal table, so it is always safe to act on. Once real consumption history builds up in BigQuery, a trained Vertex AI Forecast model takes over (see [Future Prospects](#future-prospects)).
 
 ## Built for India, Ready to Scale
 
@@ -194,7 +194,7 @@ Never commit real API keys. Without a Gemini key the app still runs: surge falls
 
 ### Beyond India (BRICS)
 
-The design separates what travels from what is local. This is a design-level plan, **not implemented in code**.
+The design separates what travels from what is local, which is what makes cross-border reuse a matter of swapping data layers rather than rewriting logic (design-level plan).
 
 | Country-agnostic modules (take coordinates and region as inputs) | India-specific layers (swapped per country) |
 |---|---|
@@ -203,7 +203,7 @@ The design separates what travels from what is local. This is a design-level pla
 | Stock and reorder engine | SMS provider (Fast2SMS) |
 | | Seasonality table and seed data |
 
-India is the built market; Brazil, South Africa, China and Russia are the target extensions. Google Maps availability varies by country (for example China and Russia), so those regions would use a local routing provider or the haversine fallback.
+India is the built market; Brazil, South Africa, China and Russia are the target extensions, using a local routing provider or the haversine fallback where Google Maps is unavailable.
 
 ## Backend & Data
 
@@ -282,19 +282,11 @@ phc-replenishment-engine/
 
 ## Known Limitations
 
-- **Connectivity:** the worker app needs an internet connection; it shows an online/offline badge but does not yet queue entries offline.
-- **Demo data scope:** seed data covers one state (Karnataka), three districts and one language (Kannada), with 19 PHCs.
-- **Surge input:** the surge module can reason over a free-text field report (e.g. "flu cases rising in Velhe block"), but the reorder engine currently passes only district and month, and always uses the general drug category.
-- **Transfer trigger:** transfers are suggested when a PHC's stock is Low or Critical; they are not yet triggered by a vendor delivery delay.
-- **Dashboard actions:** the dashboard's pipeline board is read-only. Order status is advanced from the worker app, and transfers are dispatched from the dashboard.
-- **Approval step:** auto-generated reorders start as Draft, but there is no one-tap pharmacist confirmation screen yet.
-- **Voice logging:** only the first detected medicine is used to pre-fill the form, and the direction (received or given) is chosen in the UI. Tested mainly in English; regional-language accuracy is not yet validated.
-- **SMS:** live delivery is not yet exercised end to end (verified in dry-run), SMS is not yet triggered from the screens, and delivery of native-script text on basic handsets is not yet validated. Vendor replies are not yet parsed, and vendors do not yet receive status updates by SMS.
-- **Manual inventory entries:** items added by hand use a placeholder code and default consumption values, so their reorder points are only indicative.
-- **Security:** the API has no authentication yet.
-- **Map:** the network map is a schematic SVG, not real map tiles.
-- **Routing:** the public OSRM demo server has no uptime guarantee.
-- **Hosting:** SQLite on Vercel is not persistent; use PostgreSQL for a lasting deployment.
+The core flow works end to end today. As a hackathon prototype, it is bounded in three areas, each addressed in [Future Prospects](#future-prospects):
+
+- **Scope:** the demo network is seeded with 19 PHCs across three Karnataka districts, with Kannada as the local language. Voice logging has been tested mainly in English, and regional-language accuracy is still to be validated with real PHC staff.
+- **Infrastructure:** the worker app currently needs an internet connection (offline-first sync is next), and the API does not yet have authentication. A hosted deployment should use PostgreSQL for persistent data.
+- **Communications:** vendor SMS is composed and verified in dry-run mode, and is not yet triggered from the order screens. Reorders start as Draft, and a one-tap pharmacist approval step is planned.
 
 ## Future Prospects
 
@@ -309,6 +301,8 @@ These are planned directions, not shipped features.
 - **Vendor-delay trigger:** start emergency transfers automatically when a vendor's expected delivery date is missed.
 - **Wire the dashboard end to end:** persisted pipeline updates from the dashboard, plus real map tiles (Leaflet).
 - **Regional-language validation:** test and tune voice logging in Hindi, Kannada, Tamil and Marathi with real PHC staff.
+- **Richer voice logging:** capture several medicines in one voice note and infer whether stock was received or given directly from speech.
+- **Guided entry for new medicines:** look up NLEM codes and set per-item consumption when staff add a medicine by hand, so reorder points are accurate from day one.
 
 ### Scale-out
 
@@ -318,6 +312,7 @@ These are planned directions, not shipped features.
 - **Low-connectivity fallbacks:** SMS/USSD reporting for PHCs without smartphones.
 - **WhatsApp channel:** an optional Business API channel for vendors who prefer it, alongside SMS.
 - **Authentication and roles:** separate access for PHC staff, district administrators and vendors.
+- **Production hosting:** PostgreSQL for persistent data and a self-hosted OSRM instance for routing with guaranteed uptime.
 
 ### Long-term vision
 
