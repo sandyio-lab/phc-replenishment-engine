@@ -746,7 +746,10 @@ body {
       </div>
     </div>
     <div class="header-stats" id="global-stats"></div>
-    <span id="last-updated-ts" style="font-size:10px;color:var(--ink-muted);white-space:nowrap;align-self:center;">Fetching live data…</span>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span id="last-updated-ts" style="font-size:10px;color:var(--ink-muted);white-space:nowrap;align-self:center;">Fetching live data…</span>
+      <a class="btn btn-primary" href="/worker" title="Open Worker Dashboard">Open Worker Dashboard</a>
+    </div>
   </header>
 
   <div class="app-body">
@@ -1901,3 +1904,4 @@ function clearSearch() {
 </script>
 </body>
 </html>
+
