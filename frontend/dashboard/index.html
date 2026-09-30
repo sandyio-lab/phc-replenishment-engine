@@ -1274,9 +1274,13 @@ function clearSearch() {
           identity.textContent = `${member.full_name} · ${member.designation}`;
           const state = document.createElement("span");
           state.className = `attendance-state ${member.status}`;
-          if (member.status === "on_duty") state.textContent = `On duty · ${formatAttendanceTime(member.check_in_at)}`;
-          else if (member.status === "checked_out") state.textContent = `Out · ${formatAttendanceTime(member.check_out_at)}`;
-          else state.textContent = "Not checked in";
+          if (member.status === "on_duty") {
+            state.textContent = `In ${formatAttendanceTime(member.check_in_at)} · On duty`;
+          } else if (member.status === "checked_out") {
+            state.textContent = `In ${formatAttendanceTime(member.check_in_at)} · Out ${formatAttendanceTime(member.check_out_at)}`;
+          } else {
+            state.textContent = "Not checked in";
+          }
           row.append(identity, state);
           staffList.appendChild(row);
         });
@@ -1897,4 +1901,3 @@ function clearSearch() {
 </script>
 </body>
 </html>
-
